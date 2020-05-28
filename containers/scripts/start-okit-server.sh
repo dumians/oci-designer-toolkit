@@ -6,6 +6,7 @@
 export ROOT_DIR=$(cd $(dirname $0)/../..; pwd)
 
 docker run -d --rm -p 80:80 \
+       --bind 0.0.0.0 \
        --name okit \
        --hostname okit \
        -v ~/.oci:/root/.oci:Z \
