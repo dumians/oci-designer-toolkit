@@ -19,6 +19,7 @@ class DynamicRoutingGateway extends OkitArtifact {
         // Configure default values
         this.display_name = this.generateDefaultName(okitjson.dynamic_routing_gateways.length + 1);
         this.compartment_id = data.compartment_id;
+        this.vcn_id = data.parent_id;
         this.fast_connect_ids = [];
         this.ipsec_connection_ids = [];
         this.remote_peering_connection_ids = [];
@@ -60,17 +61,7 @@ class DynamicRoutingGateway extends OkitArtifact {
      */
     draw() {
         console.groupCollapsed('Drawing ' + this.getArtifactReference() + ' : ' + this.id + ' [' + this.parent_id + ']');
-        let svg = drawArtifact(this.getSvgDefinition());
-        /*
-        ** Add Properties Load Event to created svg. We require the definition of the local variable "me" so that it can
-        ** be used in the function dur to the fact that using "this" in the function will refer to the function not the
-        ** Artifact.
-         */
-        let me = this;
-        svg.on("click", function() {
-            me.loadProperties();
-            d3.event.stopPropagation();
-        });
+        let svg = super.draw();
         // Get Inner Rect to attach Connectors
         let rect = svg.select("rect[id='" + safeId(this.id) + "']");
         let boundingClientRect = rect.node().getBoundingClientRect();
@@ -204,7 +195,7 @@ class DynamicRoutingGateway extends OkitArtifact {
     }
 
     static getDropTargets() {
-        return [Compartment.getArtifactReference()];
+        return [VirtualCloudNetwork.getArtifactReference()];
     }
 
     static query(request = {}, region='') {
