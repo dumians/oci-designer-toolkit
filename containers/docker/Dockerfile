@@ -31,7 +31,7 @@ RUN yum install -y \
         python3-pip \
  && rm -rf /var/cache/yum \
 # Upgrade pip
- && python3 -m pip install --upgrade pip \
+ && python3 -m pip install --upgrade pip==20.0.2 \
 # Install required python modules
  && pip3 install --no-cache-dir \
         click==7.0 \
