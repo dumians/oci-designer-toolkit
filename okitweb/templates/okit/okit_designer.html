@@ -6,6 +6,10 @@
 
 {% block headscripts %}
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='okit/view/js/okit_view.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='okit/view/designer/js/okit_designer_view.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='okit/view/tree/js/okit_tree_view.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='okit/query/oci/js/okit_query.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer.js') }}"></script>
     <script type="text/javascript">
         let palette_svg = {}
@@ -31,25 +35,29 @@
                     }
                 });
             {% endfor %}
-            {% endfor %}
+        {% endfor %}
     </script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer_svg.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer_drag_drop.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer_generation.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer_properties.js') }}"></script>
-    {% for oci_asset_js in oci_assets_js %}
-        <script type="text/javascript" src="{{ url_for('static', filename='okit/js/oci_artefacts/' + oci_asset_js) }}"></script>
+    {% for model_js in artefact_model_js_files %}
+        <script type="text/javascript" src="{{ url_for('static', filename='okit/model/js/artefacts/' + model_js) }}"></script>
     {% endfor %}
-    <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer_fragments.js') }}"></script>
+    {% for view_js in artefact_view_js_files %}
+        <script type="text/javascript" src="{{ url_for('static', filename='okit/view/designer/js/artefacts/' + view_js) }}"></script>
+    {% endfor %}
+    <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_designer_ready.js') }}"></script>
 {% endblock %}
 
 {% block headcss %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='okit/css/okit_designer.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='okit/view/tree/css/okit_tree_view.css') }}">
 {% endblock %}
 
 {% block navmenublock %}
     <ul id="navigation_menu_list" class="okit-navigation-list">
-        <ul class="okit-navigation-sub-list">
+        <!--ul class="okit-navigation-sub-list">
             <li>
                 <div>
                     <span class="header-item">
@@ -59,7 +67,7 @@
                 </div>
             </li>
             <li><a id="okit_preferences" class="parent-item" href="javascript:void(0)" onclick="handlePreferences()">Preferences</a></li>
-        </ul>
+        </ul-->
         <ul class="okit-navigation-sub-list">
             <li>
                 <div>
@@ -80,6 +88,7 @@
             </li>
             <li><a id="query-oci-menu-item" class="parent-item" href="javascript:void(0)" onclick="handleQueryOci()">Query</a></li>
             <li><a id="file-redraw-menu-item"  class="parent-item" href="javascript:void(0)" onclick="handleRedraw()">Redraw</a></li>
+            <li><a id="file-validate-menu-item"  class="parent-item" href="javascript:void(0)" onclick="handleValidate()">Validate</a></li>
         </ul>
         <ul class="okit-navigation-sub-list">
             <li>
@@ -108,7 +117,7 @@
                 {% endif %}
             {% endfor %}
         </ul>
-        <!--ul class="okit-navigation-sub-list">
+        <ul class="okit-navigation-sub-list">
             <li>
                 <div>
                     <span class="header-item">
@@ -117,30 +126,10 @@
                     </span>
                 </div>
             </li>
-            <li><a id="view-designer-menu-item" class="parent-item" href="javascript:void(0)">Designer</a></li>
+            <li><a id="view-compartment-menu-item" class="parent-item" href="javascript:void(0)">Compartment</a></li>
             <li><a id="view-network-menu-item"  class="parent-item" href="javascript:void(0)">Network</a></li>
-            <li><a id="view-security-menu-item" class="parent-item" href="javascript:void(0)">Security</a></li>
-        </ul-->
-        <!--ul class="okit-navigation-sub-list">
-            <li>
-                <div>
-                    <span class="header-item">
-                        <div class="header-item-icon"><img src="{{ url_for('static', filename='svg/compute.svg') }}" alt="Query Menu"></div>
-                        <span>Query</span>
-                    </span>
-                </div>
-            </li>
-        </ul-->
-        <!--ul class="okit-navigation-sub-list">
-            <li>
-                <div>
-                    <span class="header-item">
-                        <div class="header-item-icon"><img src="{{ url_for('static', filename='svg/compute.svg') }}" alt="Generate Menu"></div>
-                        <span>Generate</span>
-                    </span>
-                </div>
-            </li>
-        </ul-->
+            <!--li><a id="okit_view-security-menu-item" class="parent-item" href="javascript:void(0)">Security</a></li-->
+        </ul>
         <ul class="okit-navigation-sub-list">
             <li>
                 <div>
@@ -187,7 +176,7 @@
                                      title="{{ palette_icon['title'] }}"
                                      draggable="true"
                                      alt="{{ palette_icon['title'] }}"
-                                     ondragstart="dragStart(event, {{ palette_icon['title'] | replace(' ', '') }})">
+                                     ondragstart="dragStart(event, {{ palette_icon['title'] | replace(' ', '') }}View)">
                                     <label>{{ palette_icon['title'] }}</label>
                                 </div>
                             {% endfor %}
@@ -196,7 +185,7 @@
                 {% endif %}
             {% endfor %}
             <details  id="fragments" class="okit-palette-icon-group" open>
-                <summary class="okit-palette-icon-group-header"><img id="okit-palette-group-icon" src="{{ url_for('static', filename='svg/fragments.svg') | lower }}" alt="Fragments"><label>Fragments</label></summary>
+                <summary class="okit-palette-icon-group-header"><img id="okit-fragment-palette-group-icon" src="{{ url_for('static', filename='svg/fragments.svg') | lower }}" alt="Fragments"><label>Fragments</label></summary>
                 <div class="okit-palette-icon-group-icons okit-icons-only">
                     {% for fragment_icon in fragment_icons %}
                         <div>
@@ -205,13 +194,15 @@
                              title="{{ fragment_icon['title'] }}"
                              draggable="true"
                              alt="{{ fragment_icon['title'] }}"
-                             ondragstart="dragStart(event, Fragment); Fragment.setFragmentType('{{ fragment_icon['title'] }}')">
+                             ondragstart="dragFragmentStart(event, FragmentView, '{{ fragment_icon['title'] }}')">
                             <label>{{ fragment_icon['title'] }}</label>
                         </div>
                     {% endfor %}
                 </div>
             </details>
         </div>
+        <div id="preferences_panel" class="okit-preferences-sheet hidden"></div>
+        <div id="explorer_panel" class="okit-explorer-view hidden"></div>
     </div>
     <!--div id="left_column_dragbar" class="okit-vertical-drag-bar"></div-->
     <div id="designer_center_column" class="okit-designer-center-column okit-slide-show">
@@ -221,10 +212,43 @@
     <div id="designer_right_column" class="okit-designer-right-column okit-slide-hide-right">
         <div id="right_column_dragbar" class="okit-vertical-drag-bar hidden"></div>
         <div id="properties_panel" class="okit-property-sheet hidden"></div>
-        <div id="json_panel" class="okit-source-code hidden"></div>
+        <div id="json_model_panel" class="okit-source-code hidden"></div>
+        <div id="json_view_panel" class="okit-source-code hidden"></div>
+        <div id="json_region_panel" class="okit-source-code hidden"></div>
+        <div id="validation_panel" class="okit-source-code">
+            <div id="validation_header_div"><label id="validation_status"></label></div>
+            <details open>
+                <summary><a>
+                    <svg width="20" height="20" viewBox="0 0 20 20" focusable="false" xmlns="http://www.w3.org/2000/svg" ratio="1"> <ellipse fill="none" stroke="#000" cx="6.11" cy="3.55" rx="2.11" ry="2.15"></ellipse> <ellipse fill="none" stroke="#000" cx="6.11" cy="15.55" rx="2.11" ry="2.15"></ellipse> <circle fill="none" stroke="#000" cx="13.15" cy="9.55" r="2.15"></circle> <rect x="1" y="3" width="3" height="1"></rect> <rect x="10" y="3" width="8" height="1"></rect> <rect x="1" y="9" width="8" height="1"></rect> <rect x="15" y="9" width="3" height="1"></rect> <rect x="1" y="15" width="3" height="1"></rect> <rect x="10" y="15" width="8" height="1"></rect></svg>
+                    <span id="validation_errors_summary">Errors</span></a>
+                </summary>
+                <div class="table okit-table okit-properties-table">
+                    <div class="thead">
+                        <div class="tr"><div class="th">Type</div><div class="th">Artefact</div><div class="th">Message</div></div>
+                    </div>
+                    <div id="validation_errors_tbody" class="tbody">
+                    </div>
+                </div>
+            </details>
+            <details open>
+                <summary><a>
+                    <svg width="20" height="20" viewBox="0 0 20 20" focusable="false" xmlns="http://www.w3.org/2000/svg" ratio="1"> <ellipse fill="none" stroke="#000" cx="6.11" cy="3.55" rx="2.11" ry="2.15"></ellipse> <ellipse fill="none" stroke="#000" cx="6.11" cy="15.55" rx="2.11" ry="2.15"></ellipse> <circle fill="none" stroke="#000" cx="13.15" cy="9.55" r="2.15"></circle> <rect x="1" y="3" width="3" height="1"></rect> <rect x="10" y="3" width="8" height="1"></rect> <rect x="1" y="9" width="8" height="1"></rect> <rect x="15" y="9" width="3" height="1"></rect> <rect x="1" y="15" width="3" height="1"></rect> <rect x="10" y="15" width="8" height="1"></rect></svg>
+                    <span id="validation_warnings_summary">Warnings</span></a>
+                </summary>
+                <div class="table okit-table okit-properties-table">
+                    <div class="thead">
+                        <div class="tr"><div class="th">Type</div><div class="th">Artefact</div><div class="th">Message</div></div>
+                    </div>
+                    <div id="validation_warnings_tbody" class="tbody">
+                    </div>
+                </div>
+            </details>
+        </div>
+        <div id="value_proposition_panel" class="okit-value-proposition hidden"></div>
+        <div id="cost_estimate_panel" class="okit-cost-estimate hidden"></div>
         <!--div id="settings_panel" class="okit-settings-sheet hidden"></div-->
     </div>
-    <div class="hidden"><input type="file" id="files" class="file-button toolbar-button" name="file[]" accept="application/json"></div>
+    <div class="hidden"><input type="file" id="files" class="file-button toolbar-button" name="file[]" accept="application/json" onclick="this.value = null"></div>
     <div id="context-menu" class="hidden context-menu"><button id="right-click-delete">Delete</button></div>
 {% endblock %}
 

@@ -4,8 +4,11 @@
 */
 console.info('Loaded Console Javascript');
 
-const okitVersion = '0.6.0';
-const okitReleaseDate = '3rd June 2020';
+const okitVersion = '0.9.2';
+const okitReleaseDate = '7th August 2020';
+// Validation
+const validate_error_colour = "#ff4d4d";
+const validate_warning_colour = "#ffd633";
 
 function hideNavMenu() {
     $(jqId('navigation_menu')).removeClass('okit-navigation-menu-show');
@@ -20,6 +23,11 @@ function checkForUpdate() {
             $(jqId('okit_update')).attr(`href`, `https://github.com/oracle/oci-designer-toolkit/tree/${resp.tag}`);
         }
     });
+}
+
+function showConfigErrors() {
+    let msg = okitOciConfig.results.join('\n');
+    alert(msg);
 }
 
 $(document).ready(function() {

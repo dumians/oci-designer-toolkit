@@ -1,4 +1,4 @@
-# OCI Designer Toolkit [0.6.0](CHANGELOG.md#version-0.6.0)
+# OCI Designer Toolkit [0.9.2](CHANGELOG.md#version-0.9.2)
 
 OCI designer toolKIT (OKIT) is a set of tools for enabling design, deploy and visualise OCI environments 
 through a graphical web based interface. 
@@ -28,29 +28,30 @@ web interface, to provide a portable generic, json, file that can be used to vis
 Detailed OKIT Installation steps can be found in the [OCI Designer Toolkit Installation Guide](documentation/Installation.md).
 
 ### Quick Start
-The docker image is the recommended runtime server and can be built and started using the following simple docker commands.
+The docker image is the recommended runtime server OKIT provides a simple Docker Compose script to build and start the container.
 
-#### Build Docker Image
+#### Create Config File
+
+Create the directory __<OKIT_ROOT_DIR>/containers/oci__ and within it a file called __config__ with contents similar to
+that below.
+
+```properties
+[DEFAULT]
+user=ocid1.user.oc1..aaaaaaaak6z......
+fingerprint=3b:7e:37:ec:a0:86:1....
+key_file=~/.oci/oci_api_key.pem
+tenancy=ocid1.tenancy.oc1..aaaaaaaawpqblfem........
+region=us-phoenix-1
+```
+#### Build and Start
+
 ```bash
-cd oci-designer-toolkit
-docker build --tag okit --file ./containers/docker/Dockerfile --force-rm ./containers/docker/
+cd oci-designer-toolkit/containers/docker
+docker-compose up
 ```
 
-#### Start Docker Image
-- OKIT_ROOT_DIR  : Absolute directory name for the extracted / cloned OKIT repository
-- OCI_CONFIG_DIR : Directory containing the OCI config file. Details can be found in [OCI Designer Toolkit Installation Guide](documentation/Installation.md#oci-config-file).
-
-```bash
-cd oci-designer-toolkit
-docker run -d --rm -p 80:80 \
-           --name okit \
-           --hostname okit \
-           -v <OCI_CONFIG_DIR>:/root/.oci \
-           -v <OKIT_ROOT_DIR>/okitweb:/okit/okitweb \
-           -v <OKIT_ROOT_DIR>/visualiser:/okit/visualiser \
-           -v <OKIT_ROOT_DIR>/log:/okit/log \
-           okit
-```
+__*Note:*__ For full connection to OCI you will need to follow the [Installation Create Config File instruction](documentation/Installation.md#oci-config-file) 
+prior to building.
 
 Once started the Designer BUI can be accessed on [http://localhost/okit/designer](http://localhost/okit/designer)
 

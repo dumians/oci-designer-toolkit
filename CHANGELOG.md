@@ -1,6 +1,73 @@
 # Release Notes
 
 
+## Version 0.9.2 
+**Release Date**: 7th August 2020
+### Bug Fixes
+1. Unable to drop gateways on second or subsequent VCNs (Issue #73).
+
+
+## Version 0.9.1 
+**Release Date**: 6th August 2020
+### Bug Fixes
+1. Config file warning being displayed when only [DEFAULT] section defined (OKIT-110).
+
+
+## Version 0.9.0 
+**Release Date**: 5th August 2020
+### Features
+1. Split Designer View functionality from OKIT Model (OKIT-89).
+2. Update Json associated with the Fragments to conform to new structure and remove non Reference Architecture templates because these are fragments. (OKIT-101).
+3. Check oci config file to identify if the key file exists in the container and if not display error icon with associated click / alert message (OKIT-48 / OKIT-96).
+4. Add preferences option (Hide Attached Artefacts) to indicate if Route Tables / Security List should be displayed as part of the Virtual Cloud Networks as well as an attachment.
+5. Hide Service CIDR when Service Gateway in Route Rule is selected.
+
+### Bug Fixes
+1. Resolve issue with the "description" for Network Security Groups which was being incorrectly rendered in the generated Terraform.
+2. Attached Route Tables / Security List property edits were lost. (OKIT-70).
+3. Resolve issue with the "compartment_id" for Compartment which was being incorrectly rendered in the generated Terraform.
+4. During query AD specific Subnets return Availability Domain as string not integer value, this is now converted (OKIT-105).
+5. Deleting Defined Tags did not remove them from the model (OKIT-106).
+6. Instance OS & Version information not retrieved during Query (OKIT-108).
+7. DRG Ansible template contains '=' not ':' (GitHub Issue #61).
+8. Quotes added to security Ingress / Egress rules (GitHub Issue #65).
+
+
+## Version 0.8.0 
+**Release Date**: 15th July 2020
+### Features
+1. Add Explorer / Tree View for the Artefacts in the diagram (OKIT-90).
+2. When Creating Route Table / Security List for VCN modify the Default versions for the first Route Table / Security List defined.
+3. HA Web Application Reference Architecture Template.
+4. Replace Preferences Menu Option with side panel. 
+
+### Bug Fixes
+1. Resolve issues where, occasionally, the Open/Load function would not reopen a file.
+2. Modify Vagrant Box Url to the new location. (Issue: #37)
+3. Clean Hub & Spoke Template
+4. Resolve pem key privilege issues.
+
+
+## Version 0.7.0 
+**Release Date**: 24th June 2020
+### Features
+1. Windows PowerShell Docker Helper Scripts.
+2. Add setting for last selected Region and Compartment for Query and Resource Manager Export.
+3. Modify Resource Manager dialog to close when the stack has been created and display progress bar during creation.
+4. Specify stack name during export to Resource Manager
+5. Update existing Resource Manager Stacks
+6. When Creating Security List / Route Table modify the Default for the Security List / Route Table rather than create.
+7. First implementation of simple json validation and display of results. This can be manually executed or will be automatically execute during export to Terraform, Ansible or Resource Manager and only when successful will this be allowed.
+8. Hub & Spoke Network Topology Reference Architecture.
+9. Enable Bare Metal Shapes.
+
+### Bug Fixes
+1. Service Gateway with null route_table_id will not generate Terraform / Ansible / RM. Route table values can not be assigned within the GUI.
+2. Dynamic Routing Gateway assigning the VCN Id to Compartment Id (OKIT-73).
+3. Defined Tags not generating correctly for Terraform.
+4. Terraform being generated with invalid characters (OKIT-84).
+
+
 ## Version 0.6.0 
 **Release Date**: 3rd June 2020
 ### Features
@@ -15,6 +82,7 @@
 7. Move DRG to VCN Parent rather than Compartment
 8. Check for Update
 9. Highlight selected artefact (Toggles on/off).
+10. Database Systems
 
 ### Bug Fixes
 1. Palette did not scroll

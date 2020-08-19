@@ -33,3 +33,7 @@ config/
 containers/.oci
 **/*.pem
 
+containers/oci/*
+!containers/oci/example_config
+
+!okitweb/static/model
