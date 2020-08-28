@@ -1,6 +1,33 @@
 # Release Notes
 
 
+## Version 0.10.2 
+**Release Date**: 27th August 2020
+### Bug Fixes
+1. Resolve issue where deleting an artefact would cause an addition OKE cluster to be created if one exists on the canvas. In addition deleteing OKE caused it to be removed from the model but not the view. 
+
+
+## Version 0.10.1 
+**Release Date**: 27th August 2020
+### Bug Fixes
+1. Querying occasionally hit a condition where the SVG rectangle does not exist before attempting to get the bounding client information (Issue: #86) 
+
+
+## Version 0.10.0 
+**Release Date**: 26th August 2020
+### Features
+1. Modify the Hamburger menu to replace the mouseover events for menu display to mouse click events.
+2. Add OKE Cluster functionality. Corrently works in a similar way to the advanced console create (OKIT-13).
+3. Add count field to instance to allow generation of X duplicate version of an instance. Save time and space creating duplicates.
+4. Add ability to specify Subnet for Autonomous Database (Issue: #76 & Issue: #81).
+5. Add OKE example fragment.
+
+### Bug Fixes
+1. Add test for existing of image_id for edge cases when it is missing from query (Issue: #79).
+2. Querying of Dynamic Routing Gateway occasionally cause console error (Issue: #80).
+3. Internet Gateways could only be created on the first subnet in a vcn (Issue: #71).
+
+
 ## Version 0.9.2 
 **Release Date**: 7th August 2020
 ### Bug Fixes

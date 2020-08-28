@@ -30,23 +30,25 @@ class DynamicRoutingGatewayView extends OkitDesignerArtefactView {
         let svg = super.draw();
         // Get Inner Rect to attach Connectors
         let rect = svg.select("rect[id='" + safeId(this.id) + "']");
-        let boundingClientRect = rect.node().getBoundingClientRect();
-        // Add Connector Data
-        svg.attr("data-connector-start-y", boundingClientRect.y + boundingClientRect.height / 2)
-            .attr("data-connector-start-x", boundingClientRect.x + (boundingClientRect.width))
-            .attr("data-connector-end-y", boundingClientRect.y + boundingClientRect.height / 2)
-            .attr("data-connector-end-x", boundingClientRect.x + (boundingClientRect.width))
-            .attr("data-connector-id", this.id)
-            .attr("dragable", true)
-            .selectAll("*")
-            .attr("data-connector-start-y", boundingClientRect.y + boundingClientRect.height / 2)
-            .attr("data-connector-start-x", boundingClientRect.x + (boundingClientRect.width))
-            .attr("data-connector-end-y", boundingClientRect.y + boundingClientRect.height / 2)
-            .attr("data-connector-end-x", boundingClientRect.x + (boundingClientRect.width))
-            .attr("data-connector-id", this.id)
-            .attr("dragable", true);
-        // Draw Connectors
-        // this.drawConnectors();
+        if (rect && rect.node()) {
+            let boundingClientRect = rect.node().getBoundingClientRect();
+            // Add Connector Data
+            svg.attr("data-connector-start-y", boundingClientRect.y + boundingClientRect.height / 2)
+                .attr("data-connector-start-x", boundingClientRect.x + (boundingClientRect.width))
+                .attr("data-connector-end-y", boundingClientRect.y + boundingClientRect.height / 2)
+                .attr("data-connector-end-x", boundingClientRect.x + (boundingClientRect.width))
+                .attr("data-connector-id", this.id)
+                .attr("dragable", true)
+                .selectAll("*")
+                .attr("data-connector-start-y", boundingClientRect.y + boundingClientRect.height / 2)
+                .attr("data-connector-start-x", boundingClientRect.x + (boundingClientRect.width))
+                .attr("data-connector-end-y", boundingClientRect.y + boundingClientRect.height / 2)
+                .attr("data-connector-end-x", boundingClientRect.x + (boundingClientRect.width))
+                .attr("data-connector-id", this.id)
+                .attr("dragable", true);
+            // Draw Connectors
+            // this.drawConnectors();
+        }
         console.groupEnd();
         return svg;
     }
@@ -97,13 +99,15 @@ class DynamicRoutingGatewayView extends OkitDesignerArtefactView {
     // Return Artifact Specific Definition.
     getSvgDefinition() {
         let definition = this.newSVGDefinition(this, this.getArtifactReference());
-        let first_child = this.getParent().getChildOffset(this.getArtifactReference());
-        definition['svg']['x'] = first_child.dx;
-        definition['svg']['y'] = first_child.dy;
-        definition['svg']['width'] = this.dimensions['width'];
-        definition['svg']['height'] = this.dimensions['height'];
-        definition['rect']['stroke']['colour'] = stroke_colours.bark;
-        definition['rect']['stroke']['dash'] = 1;
+        if (this.getParent()) {
+            let first_child = this.getParent().getChildOffset(this.getArtifactReference());
+            definition['svg']['x'] = first_child.dx;
+            definition['svg']['y'] = first_child.dy;
+            definition['svg']['width'] = this.dimensions['width'];
+            definition['svg']['height'] = this.dimensions['height'];
+            definition['rect']['stroke']['colour'] = stroke_colours.bark;
+            definition['rect']['stroke']['dash'] = 1;
+        }
         return definition;
     }
 

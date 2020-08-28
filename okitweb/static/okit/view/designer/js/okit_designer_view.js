@@ -53,10 +53,6 @@ class OkitDesignerJsonView extends OkitJsonView {
         for (let object_storage_bucket of this.object_storage_buckets) {
             object_storage_bucket.draw();
         }
-        // Autonomous Databases
-        for (let autonomous_database of this.autonomous_databases) {
-            autonomous_database.draw();
-        }
         // FastConnects
         for (let fast_connect of this.fast_connects) {
             fast_connect.draw();
@@ -99,6 +95,10 @@ class OkitDesignerJsonView extends OkitJsonView {
         for (let subnet of this.subnets) {
             subnet.draw();
         }
+        // OKE Clusters
+        for (let oke_cluster of this.oke_clusters) {
+            oke_cluster.draw();
+        }
 
         // Draw Subnet Sub Components
         // Database System
@@ -109,10 +109,6 @@ class OkitDesignerJsonView extends OkitJsonView {
         for (let file_storage_system of this.file_storage_systems) {
             file_storage_system.draw();
         }
-        // Containers
-        for (let container of this.containers) {
-            container.draw();
-        }
         // Instances
         for (let instance of this.instances) {
             instance.draw();
@@ -120,6 +116,10 @@ class OkitDesignerJsonView extends OkitJsonView {
         // Load Balancers
         for (let load_balancer of this.load_balancers) {
             load_balancer.draw();
+        }
+        // Autonomous Databases
+        for (let autonomous_database of this.autonomous_databases) {
+            autonomous_database.draw();
         }
 
         // Resize Main Canvas if required
