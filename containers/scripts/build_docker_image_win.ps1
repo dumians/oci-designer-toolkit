@@ -14,5 +14,26 @@ Write-Host $Rootfolder
 $DockerFolder = Join-Path -Path $Scriptfolder -ChildPath "docker"
 Write-Host $DockerFolder
 
+docker kill okit
+docker rmi okit
+
+Write-Host "*******************************************************************"
+Write-Host "**                                                               **"
+Write-Host "**  Building OL7 Image                                           **"
+Write-Host "**                                                               **"
+Write-Host "*******************************************************************"
+
 docker build --tag $DOCKERIMAGE --file $DockerFolder/Dockerfile --force-rm  $DockerFolder
+#docker build --tag okit --file containers/docker/Dockerfile --force-rm  containers/docker
+
+#$images= $(docker images -f "dangling=true" -q)
+#docker rmi ${images}
+docker images
+
+Write-Host "*******************************************************************"
+Write-Host "**                                                               **"
+Write-Host "**  Building OL7 Image Complete                                   **"
+Write-Host "**                                                               **"
+Write-Host "*******************************************************************"
+
 
