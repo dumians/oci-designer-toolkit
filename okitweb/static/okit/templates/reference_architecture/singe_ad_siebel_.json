@@ -57,7 +57,7 @@
       "title": "Database System"
     }
   ],
-  "description": "High available web application",
+  "description": "Siebel Single AD reference",
   "dynamic_routing_gateways": [],
   "fast_connects": [],
   "file_storage_systems": [],
@@ -813,7 +813,7 @@
     }
   ],
   "template_type": "Reference Architecture",
-  "title": "HA Web Application",
+  "title": "Siebel Singe AD reference",
   "virtual_cloud_networks": [
     {
       "cidr_block": "10.0.0.0/16",
