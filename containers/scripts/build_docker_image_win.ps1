@@ -24,7 +24,6 @@ Write-Host "**                                                               **"
 Write-Host "*******************************************************************"
 
 docker build --tag $DOCKERIMAGE --file $DockerFolder/Dockerfile --force-rm  $DockerFolder
-#docker build --tag okit --file containers/docker/Dockerfile --force-rm  containers/docker
 
 #$images= $(docker images -f "dangling=true" -q)
 #docker rmi ${images}

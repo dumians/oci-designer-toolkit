@@ -25,7 +25,6 @@ Write-Host $OkitwebFolder
 #default in Userprofile .oci 
 $OciCliFolder =  Join-Path -Path $ENV:UserProfile -ChildPath ".oci"
 
-
 if (-not (Test-Path -LiteralPath $LogFolder)) {
     
     try {
@@ -44,5 +43,5 @@ if (-not (Test-Path -LiteralPath $OciCliFolder))
 
 }
 
-
+#& "docker-compose" up --detach
 & "docker" run --rm -it -p 443:443/tcp -p 80:80/tcp --hostname okit --name okit -v $ENV:UserProfile\.oci:/root/.oci  -v $Rootfolder\okitweb:/okit/okitweb -v $Rootfolder\visualiser:/okit/visualiser -v $Rootfolder\log:/okit/log okit:latest

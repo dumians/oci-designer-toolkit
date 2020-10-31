@@ -48,6 +48,11 @@ with the following command.
 cd oci-designer-toolkit
 git pull
 ```
+Running Docker native On Windows :
+- enable hyper-v on windows :
+    -  DISM /Online /Enable-Feature /All /FeatureName:Microsoft-Hyper-V
+- install docker desktop - https://docs.docker.com/docker-for-windows/install/
+run it native using the powershell scripts from step ###Build Docker Image
 
 Your Docker / Vangrant image will need to be rebuilt using one of the following commands:
 

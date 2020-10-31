@@ -20,14 +20,7 @@ https://eu-frankfurt-1.ocir.io && https://fra.ocir.io
 docker login fra.ocir.io
 docker push fra.ocir.io/frxfz3gch4zb/okit:latest
 
-<none>                                        <none>              e268b9a98ec1        28 minutes ago      369MB
-<none>                                        <none>              b510c7c736a4        36 minutes ago      396MB
-<none>                                        <none>              8fb46056f8f7        45 minutes ago      397MB
-<none>                                        <none>              c0e527551ad7        54 minutes ago      397MB
-<none>                                        <none>              dfd7bfb5479d        2 hours ago         545MB
-<none>                                        <none>              51acd7c4f14d        2 hours ago         332MB
-<none>                                        <none>              3d2239c49f94        2 hours ago         539MB
-<none>                                        <none>              3369f2a8ceac        25 hours ago        290MB
+
 mcr.microsoft.com/vscode/devcontainers/base   0-alpine-3.12       60f7b05646b7        11 days ago         129MB
 vsc-vcpkg-f54ab3ed2c62499c5618e101a718ea53    latest              60f7b05646b7        11 days ago         129MB
 okit                                          latest              dbe5162d2282        2 weeks ago         234MB
