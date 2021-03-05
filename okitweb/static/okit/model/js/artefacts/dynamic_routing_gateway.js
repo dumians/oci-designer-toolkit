@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Dynamic Routing Gateway Javascript');
@@ -17,9 +17,6 @@ class DynamicRoutingGateway extends OkitArtifact {
         this.display_name = this.generateDefaultName(okitjson.dynamic_routing_gateways.length + 1);
         this.compartment_id = data.compartment_id;
         this.vcn_id = data.parent_id;
-        this.fast_connect_ids = [];
-        this.ipsec_connection_ids = [];
-        this.remote_peering_connection_ids = [];
         // Update with any passed data
         this.merge(data);
         this.convert();
@@ -30,7 +27,7 @@ class DynamicRoutingGateway extends OkitArtifact {
     ** Clone Functionality
      */
     clone() {
-        return new DynamicRoutingGateway(this, this.getOkitJson());
+        return new DynamicRoutingGateway(JSON.clone(this), this.getOkitJson());
     }
 
 

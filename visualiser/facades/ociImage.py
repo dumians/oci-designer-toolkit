@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (c) 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 """Provide Module Description
@@ -39,7 +39,7 @@ class OCIImages(OCIComputeConnection):
 
     def list(self, compartment_id=None, filter=None):
         if compartment_id is None and self.compartment_id is None:
-            compartment_id = self.config['tenancy']
+            compartment_id = self.getTenancy()
         elif compartment_id is None:
             compartment_id = self.compartment_id
 
@@ -67,9 +67,9 @@ class OCIImages(OCIComputeConnection):
         #images_json = deduplicated
         # Add Shape Compatibility
         # TODO: Upgade oci sdk
-        #shape_capabilities = OCIImageShapeCompatibility()
-        #for image in images_json:
-        #    image['shapes'] = [s['shape'] for s in shape_capabilities.list(image['id'])]
+        shape_capabilities = OCIImageShapeCompatibility()
+        for image in images_json:
+            image['shapes'] = [s['shape'] for s in shape_capabilities.list(image['id'])]
 
         # Filter results
         self.images_json = self.filterJsonObjectList(images_json, filter)
@@ -85,10 +85,6 @@ class OCIImageShapeCompatibility(OCIComputeConnection):
         super(OCIImageShapeCompatibility, self).__init__(config=config, configfile=configfile, profile=profile)
 
     def list(self, image_id=None, filter=None):
-        if image_id is None and self.image_id is None:
-            image_id = self.config['tenancy']
-        elif image_id is None:
-            image_id = self.image_id
 
         # Add filter
         if filter is None:

@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer FastConnect View Javascript');
@@ -13,65 +13,37 @@ class FastConnectView extends OkitDesignerArtefactView {
     }
 
     get parent_id() {return this.artefact.compartment_id;}
-
-    getParent() {
-        return this.getJsonView().getCompartment(this.parent_id);
-    }
-
-    getParentId() {
-        return this.parent_id;
-    }
+    get parent() {return this.getJsonView().getCompartment(this.parent_id);}
+    get top_bottom_connectors_preferred() {return false;}
 
     /*
      ** SVG Processing
      */
-    draw() {
-        console.log('Drawing ' + this.getArtifactReference() + ' : ' + this.id + ' [' + this.parent_id + ']');
-        let me = this;
-        let svg = super.draw();
-        // Get Inner Rect to attach Connectors
-        let rect = svg.select("rect[id='" + safeId(this.id) + "']");
-        let boundingClientRect = rect.node().getBoundingClientRect();
-        // Add Connector Data
-        svg.attr("data-compartment-id", this.compartment_id)
-            .attr("data-connector-start-y", boundingClientRect.y + (boundingClientRect.height / 2))
-            .attr("data-connector-start-x", boundingClientRect.x)
-            .attr("data-connector-end-y", boundingClientRect.y + (boundingClientRect.height / 2))
-            .attr("data-connector-end-x", boundingClientRect.x)
-            .attr("data-connector-id", this.id)
-            .attr("dragable", true)
-            .selectAll("*")
-            .attr("data-connector-start-y", boundingClientRect.y + (boundingClientRect.height / 2))
-            .attr("data-connector-start-x", boundingClientRect.x)
-            .attr("data-connector-end-y", boundingClientRect.y + (boundingClientRect.height / 2))
-            .attr("data-connector-end-x", boundingClientRect.x)
-            .attr("data-connector-id", this.id)
-            .attr("dragable", true);
-        console.log();
-        return svg;
+    // Add Specific Mouse Events
+    addAssociationHighlighting() {
+        if (this.drg_id !== '') {$(jqId(this.drg_id)).addClass('highlight-association');}
+        $(jqId(this.artefact_id)).addClass('highlight-association');
     }
 
-    // Return Artifact Specific Definition.
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, this.getArtifactReference());
-        let first_child = this.getParent().getChildOffset(this.getArtifactReference());
-        definition['svg']['x'] = first_child.dx;
-        definition['svg']['y'] = first_child.dy;
-        definition['svg']['width'] = this.dimensions['width'];
-        definition['svg']['height'] = this.dimensions['height'];
-        definition['rect']['stroke']['colour'] = stroke_colours.purple;
-        definition['rect']['stroke']['dash'] = 1;
-        return definition;
+    removeAssociationHighlighting() {
+        if (this.drg_id !== '') {$(jqId(this.drg_id)).removeClass('highlight-association');}
+        $(jqId(this.artefact_id)).removeClass('highlight-association');
     }
-
+    // Draw Connections
+    drawConnections() {
+        if (this.drg_id !== '') {this.drawConnection(this.id, this.drg_id);}
+    }
 
     /*
     ** Property Sheet Load function
      */
     loadProperties() {
-        let okitJson = this.getOkitJson();
         let me = this;
-        $(jqId(PROPERTIES_PANEL)).load("propertysheets/fast_connect.html", () => {loadPropertiesSheet(me.artefact);});
+        $(jqId(PROPERTIES_PANEL)).load("propertysheets/fast_connect.html", () => {
+            // Load DRG Select
+            me.loadDynamicRoutingGatewaySelect('gateway_id');
+            loadPropertiesSheet(me.artefact);
+        });
     }
 
     /*

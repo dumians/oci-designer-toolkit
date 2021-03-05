@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer LoadBalancer View Javascript');
@@ -13,95 +13,15 @@ class LoadBalancerView extends OkitDesignerArtefactView {
     }
 
     get parent_id() {return this.artefact.subnet_ids[0];}
-    get minimum_width() {return 135;}
-    get minimum_height() {return 100;}
-
-    getParent() {
-        return this.getJsonView().getSubnet(this.parent_id);
-    }
-
-    getParentId() {
-        return this.parent_id;
-    }
+    get parent() {return this.getJsonView().getSubnet(this.parent_id);}
+    // Direct Subnet Access
+    get subnet_id() {return this.artefact.subnet_ids[0];}
+    set subnet_id(id) {this.artefact.subnet_ids[0] = id;}
 
     /*
      ** SVG Processing
      */
-    draw() {
-        console.log('Drawing ' + this.getArtifactReference() + ' : ' + this.id + ' [' + this.parent_id + ']');
-        let me = this;
-        let svg = super.draw();
-        // Get Inner Rect to attach Connectors
-        let rect = svg.select("rect[id='" + safeId(this.id) + "']");
-        let boundingClientRect = rect.node().getBoundingClientRect();
-        // Add Connector Data
-        svg.attr("data-connector-start-y", boundingClientRect.y + boundingClientRect.height)
-            .attr("data-connector-start-x", boundingClientRect.x + (boundingClientRect.width / 2))
-            .attr("data-connector-end-y", boundingClientRect.y + boundingClientRect.height)
-            .attr("data-connector-end-x", boundingClientRect.x + (boundingClientRect.width / 2))
-            .attr("data-connector-id", this.id)
-            .attr("dragable", true)
-            .selectAll("*")
-            .attr("data-connector-start-y", boundingClientRect.y + boundingClientRect.height)
-            .attr("data-connector-start-x", boundingClientRect.x + (boundingClientRect.width / 2))
-            .attr("data-connector-end-y", boundingClientRect.y + boundingClientRect.height)
-            .attr("data-connector-end-x", boundingClientRect.x + (boundingClientRect.width / 2))
-            .attr("data-connector-id", this.id)
-            .attr("dragable", true);
-        // Draw Connectors
-        this.drawConnectors();
-        console.log();
-        return svg;
-    }
-
-    drawConnectors() {
-        console.log('Drawing Connectors for ' + this.getArtifactReference() + ' : ' + this.id + ' [' + this.parent_id + ']');
-        // Check if there are any missing forllowing query
-        this.checkConnectors();
-        // Get Grand Parent
-        let grandparent_id = d3.select(d3Id(this.parent_id)).attr('data-parent-id');
-        // Define Connector Parent
-        let parent_svg = d3.select(d3Id(grandparent_id + "-svg"));
-        let parent_rect = d3.select(d3Id(grandparent_id));
-        parent_svg = d3.select(d3Id('canvas-svg'));
-        parent_rect = d3.select(d3Id('canvas-rect'));
-        // Only Draw if parent exists
-        if (parent_svg.node()) {
-            console.info('Parent SVG     : ' + parent_svg.attr('id'));
-            // Define SVG position manipulation variables
-            let svgPoint = parent_svg.node().createSVGPoint();
-            let screenCTM = parent_rect.node().getScreenCTM();
-            svgPoint.x = d3.select(d3Id(this.id)).attr('data-connector-start-x');
-            svgPoint.y = d3.select(d3Id(this.id)).attr('data-connector-start-y');
-            let connector_start = svgPoint.matrixTransform(screenCTM.inverse());
-            console.info('Start svgPoint.x : ' + svgPoint.x);
-            console.info('Start svgPoint.y : ' + svgPoint.y);
-            console.info('Start matrixTransform.x : ' + connector_start.x);
-            console.info('Start matrixTransform.y : ' + connector_start.y);
-
-            let connector_end = null;
-
-            if (this.instance_ids.length > 0) {
-                for (let i = 0; i < this.instance_ids.length; i++) {
-                    let instance_svg = d3.select(d3Id(this.instance_ids[i]));
-                    if (instance_svg.node()) {
-                        svgPoint.x = instance_svg.attr('data-connector-start-x');
-                        svgPoint.y = instance_svg.attr('data-connector-start-y');
-                        connector_end = svgPoint.matrixTransform(screenCTM.inverse());
-                        console.info('End svgPoint.x   : ' + svgPoint.x);
-                        console.info('End svgPoint.y   : ' + svgPoint.y);
-                        console.info('End matrixTransform.x : ' + connector_end.x);
-                        console.info('End matrixTransform.y : ' + connector_end.y);
-                        let polyline = drawConnector(parent_svg, this.generateConnectorId(this.instance_ids[i], this.id),
-                            {x:connector_start.x, y:connector_start.y}, {x:connector_end.x, y:connector_end.y});
-                    }
-                }
-            }
-        }
-        console.log();
-    }
-
-    checkConnectors() {
+    checkBackends() {
         if (this.backend_sets) {
             for (let [key, value] of Object.entries(this.backend_sets)) {
                 for (let backend of value.backends) {
@@ -119,26 +39,20 @@ class LoadBalancerView extends OkitDesignerArtefactView {
         }
     }
 
-    // Return Artifact Specific Definition.
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, this.getArtifactReference());
-        let first_child = this.getParent().getChildOffset(this.getArtifactReference());
-        definition['svg']['x'] = first_child.dx;
-        definition['svg']['y'] = first_child.dy;
-        definition['svg']['width'] = this.dimensions['width'];
-        definition['svg']['height'] = this.dimensions['height'];
-        definition['svg']['align'] = "center";
-        definition['rect']['stroke']['colour'] = stroke_colours.bark;
-        definition['rect']['stroke']['dash'] = 1;
-        definition['name']['show'] = true;
-        definition['name']['align'] = "center";
-        return definition;
+    // Draw Connections
+    drawConnections() {
+        // Check if there are any missing following query
+        this.checkBackends();
+        for (let instance_id of this.artefact.instance_ids) {
+            if (instance_id !== '') {this.drawConnection(this.id, instance_id);}
+        }
     }
 
     /*
     ** Property Sheet Load function
      */
     loadProperties() {
+        const self = this;
         let okitJson = this.getOkitJson();
         let me = this;
         $(jqId(PROPERTIES_PANEL)).load("propertysheets/load_balancer.html", () => {
@@ -156,9 +70,48 @@ class LoadBalancerView extends OkitDesignerArtefactView {
             }
             // Build Network Security Groups
             this.loadNetworkSecurityGroups('network_security_group_ids', this.subnet_ids[0]);
+            // Build Loadbalancer Shapes
+            this.loadLoadBalancerShapes('shape');
+            if (this.shape === 'flexible') {
+                document.getElementById('minimum_bandwidth_in_mbps_row').classList.remove('collapsed');
+                document.getElementById('maximum_bandwidth_in_mbps_row').classList.remove('collapsed');
+            } else {
+                this.shape_details.minimum_bandwidth_in_mbps = 0;
+                this.shape_details.maximum_bandwidth_in_mbps = 0;
+            }
+            document.getElementById('shape').addEventListener("change", (event) => {self.showHideBandwidth(event.target.value)});
+            document.getElementById('minimum_bandwidth_in_mbps').addEventListener("input", () => {self.setMinMaxBandwidth()});
             // Load Properties
             loadPropertiesSheet(me.artefact);
         });
+    }
+
+    showHideBandwidth(shape) {
+        const min_bandwidth = document.getElementById('minimum_bandwidth_in_mbps');
+        const max_bandwidth = document.getElementById('maximum_bandwidth_in_mbps');
+        if (shape === 'flexible') {
+            document.getElementById('minimum_bandwidth_in_mbps_row').classList.remove('collapsed');
+            document.getElementById('maximum_bandwidth_in_mbps_row').classList.remove('collapsed');
+            this.shape_details.minimum_bandwidth_in_mbps = 10;
+            this.shape_details.maximum_bandwidth_in_mbps = 10;
+        } else {
+            document.getElementById('minimum_bandwidth_in_mbps_row').classList.add('collapsed');
+            document.getElementById('maximum_bandwidth_in_mbps_row').classList.add('collapsed');
+            this.shape_details.minimum_bandwidth_in_mbps = 0;
+            this.shape_details.maximum_bandwidth_in_mbps = 0;
+        }
+        //min_bandwidth.setAttribute('value', this.shape_details.minimum_bandwidth_in_mbps);
+        min_bandwidth.value = this.shape_details.minimum_bandwidth_in_mbps;
+        //max_bandwidth.setAttribute('value', this.shape_details.maximum_bandwidth_in_mbps);
+        max_bandwidth.value = this.shape_details.maximum_bandwidth_in_mbps;
+    }
+
+    setMinMaxBandwidth() {
+        const max_bandwidth = document.getElementById('minimum_bandwidth_in_mbps');
+        const min = this.shape_details.minimum_bandwidth_in_mbps;
+        max_bandwidth.setAttribute('min', min);
+        this.shape_details.maximum_bandwidth_in_mbps = Math.max(this.shape_details.minimum_bandwidth_in_mbps, this.shape_details.maximum_bandwidth_in_mbps);
+        max_bandwidth.value = this.shape_details.maximum_bandwidth_in_mbps;
     }
 
     /*

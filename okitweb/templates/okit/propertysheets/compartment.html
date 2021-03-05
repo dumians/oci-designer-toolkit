@@ -1,5 +1,5 @@
 <!--
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 -->
 {% extends "okit/propertysheets/base_property_sheet.html" %}
@@ -7,7 +7,7 @@
 {% block title_block %}Compartment{% endblock %}
 
 {% block required_properties_table_rows_block %}
-    <div class='tr'><div class='td'>Name</div><div class='td'><input type="text" id="name" name="name" class="okit-property-value"></div></div>
+    {{ properties_input('Description', 'description', type='text') }}
 {% endblock %}
 
 {% block optional_properties_table_block %}{% endblock %}

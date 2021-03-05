@@ -1,5 +1,5 @@
 
-# Copyright (c) 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 """Provide Module Description
@@ -35,7 +35,7 @@ class OCIAnsibleGenerator(OCIGenerator):
 
     def writeFiles(self):
         main_rendered = self.getRenderedMain()
-        # Write Main tf processing file
+        # Write Main ansible processing file
         writeAnsibleFile(os.path.join(self.output_dir, self.MAIN_FILE_NAME), main_rendered)
         # Write Variable files
         variable_values = []

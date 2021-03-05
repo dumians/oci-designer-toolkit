@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (c) 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 """Provide Module Description
@@ -32,7 +32,7 @@ class OCIDatabaseVersions(OCIDatabaseConnection):
 
     def list(self, compartment_id=None, filter=None):
         if compartment_id is None and self.compartment_id is None:
-            compartment_id = self.config['tenancy']
+            compartment_id = self.getTenancy()
         elif compartment_id is None:
             compartment_id = self.compartment_id
 

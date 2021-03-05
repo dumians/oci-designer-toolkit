@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Instance Pool Javascript');
@@ -27,11 +27,12 @@ class InstancePool extends OkitArtifact {
         this.size = 3;
         this.load_balancers = [];
         this.instance_configuration = {
-            source: 'NONE',
-            instance_details: {
-                instance_type: 'compute'
-            }
+            source: 'INSTANCE',
+            instance_id: ''
         };
+        this.auto_scaling = {
+            policies: []
+        }
         // Update with any passed data
         this.merge(data);
         this.convert();
@@ -48,7 +49,7 @@ class InstancePool extends OkitArtifact {
     ** Clone Functionality
      */
     clone() {
-        return new InstancePool(this, this.getOkitJson());
+        return new InstancePool(JSON.clone(this), this.getOkitJson());
     }
 
     getNamePrefix() {
@@ -60,5 +61,19 @@ class InstancePool extends OkitArtifact {
      */
     static getArtifactReference() {
         return 'Instance Pool';
+    }
+
+    /*
+    ** Initialisation Functions
+     */
+    initialisePolicy() {
+        const policy = {
+            capacity: {
+                initial: 2,
+                max: 2,
+                min: 1
+            },
+            policy_type: ''
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded OKIT Designer View Javascript');
@@ -8,32 +8,32 @@ class OkitDesignerJsonView extends OkitJsonView {
     // Define Constants
     static get CANVAS_SVG() {return 'canvas-svg'}
 
-    constructor(okitjson=null, parent_id = 'canvas-div', display_grid = false, palette_svg = []) {
+    constructor(okitjson=null, parent_id = 'canvas-div', palette_svg = []) {
         super(okitjson);
         this.parent_id = parent_id;
-        this.display_grid = display_grid;
+        //this.display_grid = display_grid;
         this.palette_svg = palette_svg;
     }
 
-    static newView(model, parent_id, display_grid = false, palette = []) {
-        return new OkitDesignerJsonView((model, parent_id, display_grid, palette))
+    static newView(model, parent_id, palette = []) {
+        return new OkitDesignerJsonView((model, parent_id, palette))
     }
 
-    draw() {
-        console.log('Drawing Designer Canvas');
-        console.info(this);
+    get display_grid() {return okitSettings.is_display_grid;}
+
+    draw(for_export=false) {
+        console.info('Drawing Designer Canvas');
         // Display Json
         this.displayOkitJson();
         // New canvas
         let width = 0;
         let height = 0;
         for (let compartment of this.compartments) {
-            console.info(`Processing ${compartment.artefact.display_name}`);
             let dimensions = compartment.dimensions;
             width = Math.max(width, dimensions.width);
             height = Math.max(height, dimensions.height);
         }
-        let canvas_svg = this.newCanvas(width, height);
+        let canvas_svg = this.newCanvas(width, height, for_export);
 
         // Draw Compartments
         for (let compartment of this.compartments) {
@@ -53,9 +53,21 @@ class OkitDesignerJsonView extends OkitJsonView {
         for (let object_storage_bucket of this.object_storage_buckets) {
             object_storage_bucket.draw();
         }
+        // Customer Premise Equipment
+        for (let customer_premise_equipment of this.customer_premise_equipments) {
+            customer_premise_equipment.draw();
+        }
         // FastConnects
         for (let fast_connect of this.fast_connects) {
             fast_connect.draw();
+        }
+        // IPSec Connections
+        for (let ipsec_connection of this.ipsec_connections) {
+            ipsec_connection.draw();
+        }
+        // Remote Peering Connections
+        for (let remote_peering_connection of this.remote_peering_connections) {
+            remote_peering_connection.draw();
         }
 
         // Draw Virtual Cloud Network Sub Components
@@ -113,6 +125,10 @@ class OkitDesignerJsonView extends OkitJsonView {
         for (let instance of this.instances) {
             instance.draw();
         }
+        // Instance Pools
+        for (let instance_pool of this.instance_pools) {
+            instance_pool.draw();
+        }
         // Load Balancers
         for (let load_balancer of this.load_balancers) {
             load_balancer.draw();
@@ -121,30 +137,46 @@ class OkitDesignerJsonView extends OkitJsonView {
         for (let autonomous_database of this.autonomous_databases) {
             autonomous_database.draw();
         }
+        // MySQL Database System
+        for (let mysql_database_system of this.mysql_database_systems) {
+            mysql_database_system.draw();
+        }
 
         // Resize Main Canvas if required
-        console.info('Canvas Width   : ' + canvas_svg.attr('width'));
-        console.info('Canvas Height  : ' + canvas_svg.attr('height'));
-        console.info('Canvas viewBox : ' + canvas_svg.attr('viewBox'));
         $(jqId("canvas-svg")).children("svg [data-type='" + Compartment.getArtifactReference() + "']").each(function () {
-            console.info('Id      : ' + this.getAttribute('id'));
-            console.info('Width   : ' + this.getAttribute('width'));
-            console.info('Height  : ' + this.getAttribute('height'));
-            console.info('viewBox : ' + this.getAttribute('viewBox'));
             canvas_svg.attr('width', Math.max(Number(canvas_svg.attr('width')), Number(this.getAttribute('width'))));
             canvas_svg.attr('height', Math.max(Number(canvas_svg.attr('height')), Number(this.getAttribute('height'))));
             canvas_svg.attr('viewBox', '0 0 ' + canvas_svg.attr('width') + ' ' + canvas_svg.attr('height'));
         });
-        console.info('Canvas Width   : ' + canvas_svg.attr('width'));
-        console.info('Canvas Height  : ' + canvas_svg.attr('height'));
-        console.info('Canvas viewBox : ' + canvas_svg.attr('viewBox'));
         if (selectedArtefact) {
             $(jqId(selectedArtefact)).toggleClass('highlight');
         }
 
-        console.info(this);
+        // Draw Connection
+        this.drawConnections();
+    }
 
-        console.log();
+    drawConnections() {
+        // IPSec Connections
+        for (let ipsec_connection of this.ipsec_connections) {
+            ipsec_connection.drawConnections();
+        }
+        // Remote Peering Connections
+        for (let remote_peering_connection of this.remote_peering_connections) {
+            remote_peering_connection.drawConnections();
+        }
+        // Fast Connects
+        for (let fast_connect of this.fast_connects) {
+            fast_connect.drawConnections();
+        }
+        // Load Balancers
+        for (let load_balancer of this.load_balancers) {
+            load_balancer.drawConnections();
+        }
+        // Local Peering Connections
+        for (let local_peering_gateway of this.local_peering_gateways) {
+            local_peering_gateway.drawConnections();
+        }
     }
 
     /*
@@ -164,33 +196,20 @@ class OkitDesignerJsonView extends OkitJsonView {
 
     displayOkitJson() {}
 
-    newCanvas(width=400, height=300) {
-        console.log('New Canvas');
-        console.info('Parent                : ' + this.parent_id);
-        console.info('Width                 : ' + width);
-        console.info('Height                : ' + height);
+    newCanvas(width=400, height=300, for_export=false) {
+        console.info('New Canvas');
         let canvas_div = d3.select(d3Id(this.parent_id));
         let parent_width  = $(jqId(this.parent_id)).width();
         let parent_height = $(jqId(this.parent_id)).height();
-        width  = Math.round(Math.max(width, parent_width));
-        height = Math.round(Math.max(height, parent_height));
-        console.info('Width                 : ' + width);
-        console.info('Height                : ' + height);
+        if (!for_export) {
+            width = Math.round(Math.max(width, parent_width));
+            height = Math.round(Math.max(height, parent_height));
+        }
         // Round up to next grid size to display full grid.
         if (okitSettings.is_display_grid) {
             width += (grid_size - (width % grid_size) + 1);
             height += (grid_size - (height % grid_size) + 1);
         }
-        console.info('Default Canvas Width  : ' + default_canvas_width);
-        console.info('Default Canvas Height : ' + default_canvas_height);
-        console.info('JQuery Parent Width   : ' + $(jqId(this.parent_id)).width());
-        console.info('JQuery Parent Height  : ' + $(jqId(this.parent_id)).height());
-        console.info('Client Parent Width   : ' + document.getElementById(this.parent_id).clientWidth);
-        console.info('Client Parent Height  : ' + document.getElementById(this.parent_id).clientHeight);
-        console.info('Window Width          : ' + $(window).width());
-        console.info('Window Height         : ' + $(window).height());
-        console.info('Canvas Width          : ' + width);
-        console.info('Canvas Height         : ' + height);
         // Empty existing Canvas
         canvas_div.selectAll('*').remove();
         // Wrapper SVG Element to define ViewBox etc
@@ -204,7 +223,6 @@ class OkitDesignerJsonView extends OkitJsonView {
             .attr("preserveAspectRatio", "xMinYMin meet");
 
         this.clearCanvas();
-        console.log();
 
         return canvas_svg;
     }
@@ -219,7 +237,7 @@ class OkitDesignerJsonView extends OkitJsonView {
             .attr("width", "100%")
             .attr("height", "100%")
             .attr("fill", "white");
-        if (this.display_grid) {
+        if (okitSettings.is_display_grid) {
             this.addGrid(canvas_svg);
         }
     }
@@ -307,23 +325,51 @@ class OkitDesignerArtefactView extends OkitArtefactView {
         super(artefact, json_view);
     }
 
+    loadCustomerPremiseEquipments(select_id) {
+        $(jqId(select_id)).empty();
+        const cpe_select = $(jqId(select_id));
+        cpe_select.append($('<option>').attr('value', '').text(''));
+        for (const cpe of this.getOkitJson().getCustomerPremiseEquipments()) {
+            cpe_select.append($('<option>').attr('value', cpe.id).text(cpe.display_name));
+        }
+    }
+
+    loadDynamicRoutingGateways(select_id) {
+        $(jqId(select_id)).empty();
+        const drg_select = $(jqId(select_id));
+        drg_select.append($('<option>').attr('value', '').text(''));
+        for (const drg of this.getOkitJson().getDynamicRoutingGateways()) {
+            drg_select.append($('<option>').attr('value', drg.id).text(drg.display_name));
+        }
+    }
+
     loadNetworkSecurityGroups(select_id, subnet_id) {
         $(jqId(select_id)).empty();
         let multi_select = d3.select(d3Id(select_id));
         if (subnet_id && subnet_id !== '') {
-            let vcn = this.getOkitJson().getVirtualCloudNetwork(this.getOkitJson().getSubnet(subnet_id).vcn_id);
-            for (let networkSecurityGroup of this.getOkitJson().network_security_groups) {
-                if (networkSecurityGroup.vcn_id === vcn.id) {
-                    let div = multi_select.append('div');
-                    div.append('input')
-                        .attr('type', 'checkbox')
-                        .attr('id', safeId(networkSecurityGroup.id))
-                        .attr('value', networkSecurityGroup.id);
-                    div.append('label')
-                        .attr('for', safeId(networkSecurityGroup.id))
-                        .text(networkSecurityGroup.display_name);
+            if (this.getOkitJson().getSubnet(subnet_id) != undefined) {
+                let vcn = this.getOkitJson().getVirtualCloudNetwork(this.getOkitJson().getSubnet(subnet_id).vcn_id);
+                for (let networkSecurityGroup of this.getOkitJson().network_security_groups) {
+                    if (networkSecurityGroup.vcn_id === vcn.id) {
+                        let div = multi_select.append('div');
+                        div.append('input')
+                            .attr('type', 'checkbox')
+                            .attr('id', safeId(networkSecurityGroup.id))
+                            .attr('value', networkSecurityGroup.id);
+                        div.append('label')
+                            .attr('for', safeId(networkSecurityGroup.id))
+                            .text(networkSecurityGroup.display_name);
+                    }
                 }
             }
+        }
+    }
+
+    loadLoadBalancerShapes(select_id) {
+        $(jqId(select_id)).empty();
+        const lb_select = $(jqId(select_id));
+        for (let shape of okitOciData.getLoadBalaancerShapes()) {
+            lb_select.append($('<option>').attr('value', shape.name).text(titleCase(shape.name)));
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Security List Javascript');
@@ -29,7 +29,7 @@ class SecurityList extends OkitArtifact {
     ** Clone Functionality
      */
     clone() {
-        return new SecurityList(this, this.getOkitJson());
+        return new SecurityList(JSON.clone(this), this.getOkitJson());
     }
 
 
@@ -90,7 +90,10 @@ class SecurityList extends OkitArtifact {
                         "max": 22,
                         "min": 22
                     },
-                    "source_port_range": null
+                    "source_port_range": {
+                        "max": "",
+                        "min": ""
+                    }
                 },
                 "udp_options": null,
                 "description": ""

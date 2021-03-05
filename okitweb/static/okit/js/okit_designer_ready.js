@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer Ready Javascript');
@@ -7,10 +7,13 @@ console.info('Loaded Designer Ready Javascript');
 /*
 ** Define variables for Artefact classes
  */
-let okitJsonModel = new OkitJson();
+//let okitJsonModel = new OkitJson();
 let okitOciConfig = new OkitOCIConfig();
 let okitOciData = new OkitOCIData();
 let okitSettings = new OkitSettings();
+let okitGitConfig = new OkitGITConfig();
+let okitAutoSave = undefined;
+//let okitTabularView = new OkitTabularJsonView();
 /*
 ** Ready function initiated on page load.
  */
@@ -21,16 +24,28 @@ $(document).ready(function() {
     okitOciConfig = new OkitOCIConfig();
     okitOciData = new OkitOCIData();
     okitSettings = new OkitSettings();
+    okitGitConfig = new OkitGITConfig();
     okitJsonModel = new OkitJson();
     okitJsonView = new OkitDesignerJsonView(okitJsonModel);
+    okitTabularView = new OkitTabularJsonView(okitJsonModel);
     console.info(okitJsonView);
-
+    /*
+    ** Configure Auto Save
+     */
+    okitAutoSave = new OkitAutoSave(hideRecoverMenuItem);
+    // Test is Auto Save exists
+    recovered_model = okitAutoSave.getOkitJsonModel();
+    if (recovered_model) {$(jqId('file_recover_menu_item_li')).removeClass('hidden');}
+    if (okitSettings && okitSettings.auto_save) {
+        okitAutoSave.startAutoSave();
+    }
     /*
     ** Add handler functionality
      */
     console.info('Adding Designer Handlers');
 
     // Left Bar & Panels
+    // Palette
     d3.select(d3Id('console_left_bar')).append('label')
         .attr('id', 'toggle_palette_button')
         .attr('class', 'okit-bar-panel-displayed okit-pointer-cursor')
@@ -49,7 +64,7 @@ $(document).ready(function() {
             checkLeftColumn();
         })
         .text('Palette');
-
+    // Compartment Explorer
     d3.select(d3Id('console_left_bar')).append('label')
         .attr('id', 'toggle_explorer_button')
         .attr('class', 'okit-pointer-cursor')
@@ -67,7 +82,7 @@ $(document).ready(function() {
             checkLeftColumn();
         })
         .text('Explorer');
-
+    // Preferences
     d3.select(d3Id('console_left_bar')).append('label')
         .attr('id', 'toggle_preferences_button')
         .attr('class', 'okit-pointer-cursor')
@@ -86,6 +101,21 @@ $(document).ready(function() {
         .text('Preferences');
 
     // Right Bar & Panels
+    // Description
+    d3.select(d3Id('console_right_bar')).append('label')
+        .attr('id', 'toggle_description_button')
+        .attr('class', 'okit-pointer-cursor')
+        .on('click', function () {
+            let open = $(this).hasClass('okit-bar-panel-displayed');
+            slideRightPanelsOffScreen();
+            if (!open) {
+                $(jqId(DESCRIPTION_PANEL)).removeClass('hidden');
+                $(this).addClass('okit-bar-panel-displayed');
+                $(jqId('right_column_dragbar')).removeClass('hidden');
+            }
+            checkRightColumn();
+        })
+        .text('Description');
     // Properties
     d3.select(d3Id('console_right_bar')).append('label')
         .attr('id', 'toggle_properties_button')
@@ -120,8 +150,8 @@ $(document).ready(function() {
         .text('Validate');
 
     // TODO: Uncomment when Value Proposition files have been created
+    // Value Proposition
     /*
-    // Cost Estimate
     d3.select(d3Id('console_right_bar')).append('label')
         .attr('id', 'toggle_value_proposition_button')
         .attr('class', 'okit-pointer-cursor')
@@ -139,9 +169,7 @@ $(document).ready(function() {
         .text('Value Proposition');
      */
 
-    // TODO: Integrate Estimate Calculator
-    /*
-    // Value Proposition
+    // Cost Estimate
     d3.select(d3Id('console_right_bar')).append('label')
         .attr('id', 'toggle_cost_estimate_button')
         .attr('class', 'okit-pointer-cursor')
@@ -149,16 +177,18 @@ $(document).ready(function() {
             let open = $(this).hasClass('okit-bar-panel-displayed');
             slideRightPanelsOffScreen();
             if (!open) {
+                $(jqId(COST_ESTIMATE_PANEL)).empty();
+                $(jqId(COST_ESTIMATE_PANEL)).text('Estimating...');
                 $(jqId(COST_ESTIMATE_PANEL)).removeClass('hidden');
                 $(this).addClass('okit-bar-panel-displayed');
                 $(jqId('right_column_dragbar')).removeClass('hidden');
-                okitJson.estimateCost(displayPricingResults);
+                okitJsonModel.estimateCost(displayPricingResults);
             }
             // Check to see if Right Column needs to be hidden
             checkRightColumn();
         })
         .text('Cost Estimate');
-     */
+
     if (developer_mode) {
         // OKIT Model Json
         d3.select(d3Id('console_right_bar')).append('label')
@@ -303,5 +333,5 @@ $(document).ready(function() {
     /*
     ** Add redraw on resize
      */
-    window.addEventListener('resize', () => { redrawSVGCanvas() });
+    window.addEventListener('resize', () => { redrawSVGCanvas(true) });
 });

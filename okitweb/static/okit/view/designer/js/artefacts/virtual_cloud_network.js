@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer VirtualCloudNetwork View Javascript');
@@ -13,42 +13,31 @@ class VirtualCloudNetworkView extends OkitContainerDesignerArtefactView {
     }
 
     get parent_id() {return this.artefact.compartment_id;}
-    get minimum_width() {return 400;}
-    get minimum_height() {return 300;}
+    get parent() {return this.getJsonView().getCompartment(this.parent_id);}
+    get children() {return [...this.json_view.getSubnets(), ...this.json_view.getInternetGateways(),
+        ...this.json_view.getNATGateways(), ...this.json_view.getRouteTables(), ...this.json_view.getSecurityLists(),
+        ...this.json_view.getNetworkSecurityGroups(), ...this.json_view.getServiceGateways(),
+        ...this.json_view.getDynamicRoutingGateways(), ...this.json_view.getLocalPeeringGateways(),
+        ...this.json_view.getOkeClusters()].filter(child => child.parent_id === this.artefact.id);}
+    get info_text() {return this.artefact.cidr_block;}
+    get summary_tooltip() {return `Name: ${this.display_name} \nCIDR: ${this.artefact.cidr_block} \nDNS: ${this.artefact.dns_label}`;}
 
-    getParent() {
-        return this.getJsonView().getCompartment(this.parent_id);
+    clone() {
+        const clone = super.clone();
+        clone.generateCIDR();
+        this.cloneChildren(clone);
+        return clone;
     }
 
-    getParentId() {
-        return this.parent_id;
+    cloneChildren(clone) {
+        for (let child of this.children) {
+            child.clone().vcn_id = clone.id;
+        }
     }
 
     /*
      ** SVG Processing
      */
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, VirtualCloudNetwork.getArtifactReference());
-        //let parent_first_child = getCompartmentFirstChildContainerOffset(this.compartment_id);
-        if (this.getParent()) {
-            let parent_first_child = this.getParent().getChildOffset(this.getArtifactReference());
-            definition['svg']['x'] = parent_first_child.dx;
-            definition['svg']['y'] = parent_first_child.dy;
-            definition['svg']['width'] = this.dimensions['width'];
-            definition['svg']['height'] = this.dimensions['height'];
-            definition['rect']['stroke']['colour'] = stroke_colours.orange;
-            definition['rect']['stroke']['dash'] = 5;
-            definition['rect']['stroke']['width'] = 2;
-            definition['icon']['x_translation'] = icon_translate_x_start;
-            definition['icon']['y_translation'] = icon_translate_y_start;
-            definition['name']['show'] = true;
-            definition['label']['show'] = true;
-            definition['info']['show'] = true;
-            definition['info']['text'] = this.cidr_block;
-        }
-        return definition;
-    }
-
     /*
     ** Property Sheet Load function
      */
@@ -60,7 +49,7 @@ class VirtualCloudNetworkView extends OkitContainerDesignerArtefactView {
                 console.info('CIDR Block Changed ' + $(jqId('cidr_block')).val());
                 for (let subnet of me.artefact.getOkitJson().subnets) {
                     if (subnet.vcn_id === me.id) {
-                        subnet.cidr_block = subnet.generateCIDR(me.id);
+                        subnet.generateCIDR();
                     }
                 }
                 redrawSVGCanvas();

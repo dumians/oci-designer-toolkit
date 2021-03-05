@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer LocalPeeringGateway View Javascript');
@@ -13,73 +13,25 @@ class LocalPeeringGatewayView extends OkitDesignerArtefactView {
     }
 
     get parent_id() {return this.artefact.vcn_id;}
-
-    getParent() {
-        return this.getJsonView().getVirtualCloudNetwork(this.parent_id);
-    }
-
-    getParentId() {
-        return this.parent_id;
-    }
+    get parent() {return this.getJsonView().getVirtualCloudNetwork(this.parent_id);}
 
     /*
      ** SVG Processing
      */
-    draw() {
-        console.log('Drawing ' + this.getArtifactReference() + ' : ' + this.id + ' [' + this.parent_id + ']');
-        let me = this;
-        let svg = super.draw();
-        // Add Highlighting
-        let fill = d3.select(d3Id(this.id)).attr('fill');
-        svg.on("mouseover", function () {
-            if (me.peer_id !== '') {
-                d3.selectAll(d3Id(me.peer_id)).attr('fill', svg_highlight_colour);
-                d3.select(d3Id(me.id)).attr('fill', svg_highlight_colour);
-            }
-            d3.event.stopPropagation();
-        });
-        svg.on("mouseout", function () {
-            if (me.peer_id !== '') {
-                d3.selectAll(d3Id(me.peer_id)).attr('fill', fill);
-                d3.select(d3Id(me.id)).attr('fill', fill);
-            }
-            d3.event.stopPropagation();
-        });
-        console.log();
-        return svg;
+    // Add Specific Mouse Events
+    addAssociationHighlighting() {
+        if (this.peer_id !== '') {$(jqId(this.peer_id)).addClass('highlight-association');}
+        $(jqId(this.artefact_id)).addClass('highlight-association');
     }
 
-    // Return Artifact Specific Definition.
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, this.getArtifactReference());
-        let dimensions = this.getDimensions();
-        let first_child = this.getParent().getChildOffset(this.getArtifactReference());
-        definition['svg']['x'] = first_child.dx;
-        definition['svg']['y'] = first_child.dy;
-        definition['svg']['width'] = dimensions['width'];
-        definition['svg']['height'] = dimensions['height'];
-        definition['rect']['stroke']['colour'] = stroke_colours.bark;
-        definition['rect']['stroke']['dash'] = 1;
-        return definition;
+    removeAssociationHighlighting() {
+        if (this.peer_id !== '') {$(jqId(this.peer_id)).removeClass('highlight-association');}
+        $(jqId(this.artefact_id)).removeClass('highlight-association');
     }
-
-    // Return Artifact Dimensions
-    getDimensions() {
-        console.log('Getting Dimensions of ' + this.getArtifactReference() + ' : ' + this.id);
-        let dimensions = this.getMinimumDimensions();
-        // Calculate Size based on Child Artifacts
-        // Check size against minimum
-        dimensions.width  = Math.max(dimensions.width,  this.getMinimumDimensions().width);
-        dimensions.height = Math.max(dimensions.height, this.getMinimumDimensions().height);
-        console.info('Overall Dimensions       : ' + JSON.stringify(dimensions));
-        console.log();
-        return dimensions;
+    // Draw Connections
+    drawConnections() {
+        if (this.peer_id !== '') {this.drawConnection(this.id, this.peer_id);}
     }
-
-    getMinimumDimensions() {
-        return {width: icon_width, height:icon_height};
-    }
-
 
     /*
     ** Property Sheet Load function

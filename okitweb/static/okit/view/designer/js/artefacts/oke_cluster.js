@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer OKE View Javascript');
@@ -14,23 +14,11 @@ class OkeClusterView extends OkitDesignerArtefactView {
 
     get parent_id() {return this.artefact.vcn_id;}
     get parent() {return this.getJsonView().getVirtualCloudNetwork(this.parent_id);}
+    // ---- Okit View Functions
 
     /*
     ** SVG Processing
      */
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, this.getArtifactReference());
-        if (this.parent) {
-            let first_child = this.parent.getChildOffset(this.getArtifactReference());
-            definition['svg']['x'] = first_child.dx;
-            definition['svg']['y'] = first_child.dy;
-            definition['svg']['width'] = this.dimensions['width'];
-            definition['svg']['height'] = this.dimensions['height'];
-            definition['rect']['stroke']['colour'] = stroke_colours.bark;
-            definition['rect']['stroke']['dash'] = 1;
-        }
-        return definition;
-    }
 
     /*
     ** Property Sheet Load function
@@ -49,6 +37,8 @@ class OkeClusterView extends OkitDesignerArtefactView {
                     .attr('for', safeId(subnet.id))
                     .text(subnet.display_name);
             }
+            // Load K8 versions
+            me.loadKubernetesVersions();
             // Load Properties
             loadPropertiesSheet(me.artefact);
             // Node Pools
@@ -224,7 +214,16 @@ class OkeClusterView extends OkitDesignerArtefactView {
         for (let image of okitOciData.getInstanceImages(os, version)) {
             image_select.append($('<option>').attr('value', image).text(image));
         }
-        $("#image" + pool_num).val($("#image" + pool_num + " option:first").val());
+        $("#image" + pool_num).val($("#image" + pool_num + " option:first").val()       );
+    }
+
+    loadKubernetesVersions() {
+        let kubernetes_version = $(jqId('kubernetes_version'));
+        $(kubernetes_version).empty();
+        for (let version of okitOciData.getKubernetesVersions()) {
+            kubernetes_version.append($('<option>').attr('value', version.version).text(version.name));
+        }
+        $("#kubernetes_version").val($("#kubernetes_version option:first").val());
     }
 
     addPlacementAD(ad, table, pool, pool_num) {

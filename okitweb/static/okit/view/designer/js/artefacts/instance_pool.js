@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer Instance Pool View Javascript');
@@ -12,16 +12,19 @@ class InstancePoolView extends OkitDesignerArtefactView {
         super(artefact, json_view);
     }
 
-    get parent_id() {return this.artefact.vcn_id;}
-    get parent() {return this.getJsonView().getVirtualCloudNetwork(this.parent_id);}
+    get parent_id() {return this.artefact.placement_configurations[0].primary_subnet_id;}
+    get parent() {return this.getJsonView().getSubnet(this.parent_id);}
+    // ---- Okit View Functions
+    get cloneable() {return false;}
+    // Test Functions variables
+    get subnet_id() {return this.artefact.placement_configurations[0].primary_subnet_id;}
 
     /*
     ** Property Sheet Load function
      */
     loadProperties() {
-        let okitJson = this.getOkitJson();
-        let me = this;
-        $(jqId(PROPERTIES_PANEL)).load("propertysheets/instance_pool.html", () => {loadPropertiesSheet(me.artefact);});
+        let self = this;
+        $(jqId(PROPERTIES_PANEL)).load("propertysheets/instance_pool.html", () => {loadPropertiesSheet(self.artefact);});
     }
 
     /*
@@ -35,11 +38,11 @@ class InstancePoolView extends OkitDesignerArtefactView {
     ** Static Functionality
      */
     static getArtifactReference() {
-        return OkeCluster.getArtifactReference();
+        return InstancePool.getArtifactReference();
     }
 
     static getDropTargets() {
-        return [VirtualCloudNetwork.getArtifactReference()];
+        return [Subnet.getArtifactReference()];
     }
 
 }

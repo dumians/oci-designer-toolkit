@@ -1,5 +1,5 @@
 
-# Copyright (c) 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 """Provide Module Description
@@ -11,13 +11,17 @@ __version__ = "1.0.0"
 __module__ = "okitOci"
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
+import json
+import oci
 import os
+import re
 import shutil
 import tempfile
 import time
 import urllib
 from flask import Blueprint
 from flask import request
+from flask import jsonify
 
 import json
 from common.okitCommon import logJson
@@ -30,31 +34,44 @@ from facades.ociAutonomousDatabases import OCIAutonomousDatabases
 from facades.ociBlockStorageVolumes import OCIBlockStorageVolumes
 from facades.ociCompartment import OCICompartments
 from facades.ociContainer import OCIContainers
+from facades.ociCpeDeviceShapes import OCICpeDeviceShapes
+from facades.ociCustomerPremiseEquipment import OCICustomerPremiseEquipments
 from facades.ociDatabaseSystem import OCIDatabaseSystems
 from facades.ociDatabaseSystemShape import OCIDatabaseSystemShapes
 from facades.ociDatabaseVersion import OCIDatabaseVersions
 from facades.ociDynamicRoutingGateway import OCIDynamicRoutingGateways
 from facades.ociFastConnect import OCIFastConnects
+from facades.ociFastConnectProviderServices import OCIFastConnectProviderServices
 from facades.ociFileStorageSystems import OCIFileStorageSystems
 from facades.ociImage import OCIImages
 from facades.ociInstance import OCIInstances
 from facades.ociInstancePool import OCIInstancePools
 from facades.ociInternetGateway import OCIInternetGateways
+from facades.ociIPSecConnection import OCIIPSecConnections
+from facades.ociKubernetesVersion import OCIKubernetesVersions
 from facades.ociLoadBalancer import OCILoadBalancers
+from facades.ociLoadBalancerShape import OCILoadBalancerShapes
 from facades.ociLocalPeeringGateway import OCILocalPeeringGateways
+from facades.ociMySQLConfiguration import OCIMySQLConfigurations
+from facades.ociMySQLDatabaseSystem import OCIMySQLDatabaseSystems
+from facades.ociMySQLShape import OCIMySQLShapes
+from facades.ociMySQLVersion import OCIMySQLVersions
 from facades.ociNATGateway import OCINATGateways
 from facades.ociNetworkSecurityGroup import OCINetworkSecurityGroups
 from facades.ociObjectStorageBuckets import OCIObjectStorageBuckets
 from facades.ociRegion import OCIRegions
+from facades.ociRemotePeeringConnection import OCIRemotePeeringConnections
 from facades.ociResourceManager import OCIResourceManagers
 from facades.ociRouteTable import OCIRouteTables
 from facades.ociSecurityList import OCISecurityLists
 from facades.ociServiceGateway import OCIServiceGateways
+from facades.ociServices import OCIServices
 from facades.ociShape import OCIShapes
 from facades.ociSubnet import OCISubnets
 from facades.ociTenancy import OCITenancies
 from facades.ociVirtualCloudNetwork import OCIVirtualCloudNetworks
 from generators.okitResourceManagerGenerator import OCIResourceManagerGenerator
+from query.ociQuery import OCIQuery
 
 # Configure logging
 logger = getLogger()
@@ -66,6 +83,37 @@ template_root = '/okit/visualiser/templates'
 
 #
 # Define Error Handlers
+#
+
+@bp.errorhandler(oci.exceptions.ServiceError)
+def handle_oci_service_error(error):
+    status_code = 500
+    success = False
+    message = ''
+    code = ''
+    for x in error.args:
+        logger.info(x)
+        if 'opc-request-id' in x:
+            code = x['code']
+            message = x['message']
+            status_code = x['status']
+            break
+    logger.info(message)
+    response = {
+        'success': success,
+        'error': {
+            'type': error.__class__.__name__,
+            'code': code,
+            'message': message
+        }
+    }
+    logger.exception(error)
+    logJson(response)
+    return jsonify(response), status_code
+
+
+#
+# Define Endpoints
 #
 
 @bp.route('/resourcemanager', methods=(['GET', 'POST']))
@@ -105,7 +153,7 @@ def ociResourceManger():
             oci_compartments = OCICompartments(config=config, profile=config_profile)
             # Generate Resource Manager Terraform zip
             generator = OCIResourceManagerGenerator(template_root, destination_dir, request.json,
-                                                    tenancy_ocid=oci_compartments.config['tenancy'],
+                                                    tenancy_ocid=oci_compartments.getTenancy(),
                                                     region=region,
                                                     compartment_ocid=compartment_id)
             generator.generate()
@@ -174,11 +222,28 @@ def ociQuery():
         logJson(query_json)
         logger.debug('======================================================================================')
         config_profile = query_json.get('config_profile', 'DEFAULT')
+        regions = query_json.get('region', None)
+        compartments = query_json.get('compartment_id', None)
+        #compartments = None # TODO need to pass list of compartment ocids
         logger.info('Using Profile : {0!s:s}'.format(config_profile))
-        response_json = {}
         config = {'region': query_json['region']}
+        query = OCIQuery(config=config, profile=config_profile)
+        response = query.executeQuery(regions=[regions] if regions else None, compartments=[compartments] if compartments else None, include_sub_compartments=query_json['sub_compartments'])
+        config = {'region': query_json['region']}
+        #response_json = response_to_json(response)
+        logJson(response)
+        return response
     else:
         return '404'
+
+
+def response_to_json(data):
+    # # simple hack to convert to json
+    # return str(results).replace("'",'"')
+    # more robust hack to convert to json
+    json_str = re.sub("'([0-9a-zA-Z-\.]*)':", '"\g<1>":', str(data))
+    json_str = re.sub("'([0-9a-zA-Z-_\.]*)': '([0-9a-zA-Z-_\.]*)'", '"\g<1>": "\g<2>"', json_str)
+    return json.dumps(json.loads(json_str), indent=2)
 
 
 @bp.route('/artefacts/<string:artifact>', methods=(['GET']))
@@ -210,6 +275,10 @@ def ociArtifacts(artifact):
         logger.info('---- Processing Compartments')
         oci_compartments = OCICompartments(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
         response_json = oci_compartments.list(filter=query_json.get('compartment_filter', None))
+    elif artifact == 'CustomerPremiseEquipment':
+        logger.info('---- Processing Customer Premise Equipment')
+        oci_cpes = OCICustomerPremiseEquipments(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
+        response_json = oci_cpes.list(filter=query_json.get('cpe_filter', None))
     elif artifact == 'DatabaseSystem':
         logger.info('---- Processing Database Systems')
         oci_database_systems = OCIDatabaseSystems(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
@@ -238,6 +307,10 @@ def ociArtifacts(artifact):
         logger.info('---- Processing Internet Gateways')
         oci_internet_gateways = OCIInternetGateways(config=config, profile=config_profile, compartment_id=query_json['compartment_id'], vcn_id=query_json['vcn_id'])
         response_json = oci_internet_gateways.list(filter=query_json.get('internet_gateway_filter', None))
+    elif artifact == 'IPSecConnection':
+        logger.info('---- Processing IPSec Connections')
+        oci_ipsec_connections = OCIIPSecConnections(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
+        response_json = oci_ipsec_connections.list(filter=query_json.get('ipsec_connection_filter', None))
     elif artifact == 'LoadBalancer':
         logger.info('---- Processing Load Balancers')
         oci_load_balancers = OCILoadBalancers(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
@@ -247,6 +320,10 @@ def ociArtifacts(artifact):
         logger.info('---- Processing LocalPeeringGateways')
         oci_local_peering_gateways = OCILocalPeeringGateways(config=config, profile=config_profile, compartment_id=query_json['compartment_id'], vcn_id=query_json['vcn_id'])
         response_json = oci_local_peering_gateways.list(filter=query_json.get('local_peering_gateway_filter', None))
+    elif artifact == 'MySQLDatabaseSystem':
+        logger.info('---- Processing MySQL Database Systems')
+        oci_mysql_database_systems = OCIMySQLDatabaseSystems(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
+        response_json = oci_mysql_database_systems.list(filter=query_json.get('mysql_database_system_filter', None))
     elif artifact == 'NATGateway':
         logger.info('---- Processing NAT Gateways')
         oci_nat_gateways = OCINATGateways(config=config, profile=config_profile, compartment_id=query_json['compartment_id'], vcn_id=query_json['vcn_id'])
@@ -263,6 +340,10 @@ def ociArtifacts(artifact):
         logger.info('---- Processing OKE Clusters')
         oke_clusters = OCIContainers(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
         response_json = oke_clusters.list(filter=query_json.get('oke_cluster_filter', None))
+    elif artifact == 'RemotePeeringConnection':
+        logger.info('---- Processing Remote Peering Connections')
+        oci_remote_peering_connections = OCIRemotePeeringConnections(config=config, profile=config_profile, compartment_id=query_json['compartment_id'])
+        response_json = oci_remote_peering_connections.list(filter=query_json.get('remote_peering_connection_filter', None))
     elif artifact == 'RouteTable':
         logger.info('---- Processing Route Tables')
         oci_route_tables = OCIRouteTables(config=config, profile=config_profile, compartment_id=query_json['compartment_id'], vcn_id=query_json['vcn_id'])
@@ -295,14 +376,45 @@ def ociArtifacts(artifact):
 def dropdownQuery():
     if request.method == 'GET':
         dropdown_json = {}
+        # Regions
+        oci_regions = OCIRegions()
+        dropdown_json["regions"] = sorted(oci_regions.list(), key=lambda k: k['name'])
+        # Services
+        oci_services = OCIServices()
+        dropdown_json["services"] = sorted(oci_services.list(), key=lambda k: k['name'])
+        # Instance Shapes
         oci_shapes = OCIShapes()
         dropdown_json["shapes"] = sorted(oci_shapes.list(), key=lambda k: k['sort_key'])
-        db_system_shapes = OCIDatabaseSystemShapes()
-        dropdown_json["db_system_shapes"] = sorted(db_system_shapes.list(), key=lambda k: k['shape'])
-        db_versions = OCIDatabaseVersions()
-        dropdown_json["db_versions"] = sorted(db_versions.list(), key=lambda k: k['version'])
+        # Instance Images
         oci_images = OCIImages()
         dropdown_json["images"] = sorted(oci_images.list(), key=lambda k: k['sort_key'])
+        # Database System Shapes
+        db_system_shapes = OCIDatabaseSystemShapes()
+        dropdown_json["db_system_shapes"] = sorted(db_system_shapes.list(), key=lambda k: k['shape'])
+        # Database Versions
+        db_versions = OCIDatabaseVersions()
+        dropdown_json["db_versions"] = sorted(db_versions.list(), key=lambda k: k['version'])
+        # CPE Device Shapes
+        cpe_device_shapes = OCICpeDeviceShapes()
+        dropdown_json["cpe_device_shapes"] = sorted(cpe_device_shapes.list(), key=lambda k: k['cpe_device_info']['vendor'])
+        # Fast Connect Provider Services
+        fast_connect_provider_services = OCIFastConnectProviderServices()
+        dropdown_json["fast_connect_provider_services"] = sorted(fast_connect_provider_services.list(), key=lambda k: k['provider_name'])
+        # MySQL Shapes
+        mysql_shapes = OCIMySQLShapes()
+        dropdown_json["mysql_shapes"] = sorted(mysql_shapes.list(), key=lambda k: k['name'])
+        # Database Versions
+        mysql_versions = OCIMySQLVersions()
+        dropdown_json["mysql_versions"] = sorted(mysql_versions.list(), key=lambda k: k['version_family'])
+        # MySQL Configurations
+        mysql_configurations = OCIMySQLConfigurations()
+        dropdown_json["mysql_configurations"] = sorted(mysql_configurations.list(), key=lambda k: k['display_name'])
+        # Instance Shapes
+        oci_loadbalancer_shapes = OCILoadBalancerShapes()
+        dropdown_json["loadbalancer_shapes"] = sorted(oci_loadbalancer_shapes.list(), key=lambda k: k['name'])
+        # Kubernetes Versions
+        k8_versions = OCIKubernetesVersions()
+        dropdown_json["kubernetes_versions"] = sorted(k8_versions.list(), key=lambda k: k['version'], reverse=True)
         return dropdown_json
     else:
         return 'Unknown Method', 500

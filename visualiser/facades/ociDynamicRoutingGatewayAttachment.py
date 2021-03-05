@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (c) 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 """Provide Module Description
@@ -42,7 +42,7 @@ class OCIDynamicRoutingGatewayAttachments(OCIVirtualNetworkConnection):
             logger.exception(e)
             return {}
 
-    def list(self, compartment_id=None, filter=None):
+    def list(self, compartment_id=None, drg_id=None, filter=None):
         if compartment_id is None:
             compartment_id = self.compartment_id
 
@@ -53,7 +53,10 @@ class OCIDynamicRoutingGatewayAttachments(OCIVirtualNetworkConnection):
         if 'lifecycle_state' not in filter:
             filter['lifecycle_state'] = 'ATTACHED'
 
-        dynamic_routing_gateway_attachments = oci.pagination.list_call_get_all_results(self.client.list_drg_attachments, compartment_id=compartment_id).data
+        if drg_id is not None:
+            dynamic_routing_gateway_attachments = oci.pagination.list_call_get_all_results(self.client.list_drg_attachments, compartment_id=compartment_id, drg_id=drg_id).data
+        else:
+            dynamic_routing_gateway_attachments = oci.pagination.list_call_get_all_results(self.client.list_drg_attachments, compartment_id=compartment_id).data
 
         # Convert to Json object
         dynamic_routing_gateway_attachments_json = self.toJson(dynamic_routing_gateway_attachments)

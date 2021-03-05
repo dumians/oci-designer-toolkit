@@ -1,5 +1,5 @@
 <!--
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 -->
 <!DOCTYPE html>
@@ -9,10 +9,13 @@
     <title>OKIT - OCI By Design</title>
     <script type="text/javascript" src="{{ url_for('static', filename='js/d3-5.15.0.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_mode.js') }}"></script>
+    <script type="text/javascript">const developer_mode = {{ developer_mode | lower }};</script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_common.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/js/okit_console.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='okit/model/js/okit_model.js') }}"></script>
+    {% if use_modules is defined %}
+    <script type="module" src="{{ url_for('static', filename='okit/modules/model/okit_model.js') }}"></script>
+    {% endif %}
     {% block headscripts %}{% endblock %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='okit/css/okit_console.css') }}">
     {% block headcss %}{% endblock %}
@@ -57,7 +60,7 @@
             <div class="okit-version-div"><label id="okit_version">Version</label></div>
             <div class="okit-update-div"><a id="okit_update" href="#" target="_blank" rel="noopener noreferrer"></a></div>
             <div>{% block footerblock %}{% endblock %}</div>
-            <div class="okit-copyright">Copyright (c) 2020, Oracle and/or its affiliates.</div>
+            <div class="okit-copyright">Copyright (c) 2020, 2021, Oracle and/or its affiliates.</div>
         </div>
     </div>
     <div id="modal_dialog_wrapper" class="okit-modal-wrapper hidden">
@@ -74,6 +77,7 @@
     </div>
     <div id="modal_loading_wrapper" class="okit-loading-wrapper hidden">
         <div id="misshapen-doughnut"></div>
+        <div id="region_progress" class="table"></div>
     </div>
     {% block footerscripts %}{% endblock %}
 </body>

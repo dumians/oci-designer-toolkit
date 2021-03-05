@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer Subnet View Javascript');
@@ -12,40 +12,48 @@ class SubnetView extends OkitContainerDesignerArtefactView {
         super(artefact, json_view);
     }
 
-    get parent_id() {return this.artefact.vcn_id;}
-    get minimum_width() {return 400;}
-    get minimum_height() {return 150;}
+    get parent_id_orig() {return this.artefact.vcn_id;}
+    get parent_orig() {return this.getJsonView().getVirtualCloudNetwork(this.parent_id);}
+    get parent_id() {
+        const vcn = this.getJsonView().getVirtualCloudNetwork(this.artefact.vcn_id);
+        if (vcn && vcn.compartment_id === this.artefact.compartment_id) {
+            return this.artefact.vcn_id;
+        } else {
+            return this.compartment_id;
+        }
+    }
+    get parent() {return this.getJsonView().getVirtualCloudNetwork(this.parent_id) ? this.getJsonView().getVirtualCloudNetwork(this.parent_id) : this.getJsonView().getCompartment(this.parent_id);}
+    get children() {return [...this.json_view.getInstances(), ...this.json_view.getLoadBalancers(),
+        ...this.json_view.getFileStorageSystems(), ...this.json_view.getAutonomousDatabases(),
+        ...this.json_view.getDatabaseSystems(), ...this.json_view.getMySQLDatabaseSystems()].filter(child => child.parent_id === this.artefact.id);}
+    get type_text() {return this.prohibit_public_ip_on_vnic ? `Private ${this.getArtifactReference()}` : `Public ${this.getArtifactReference()}`;}
+    get info_text() {return this.artefact.cidr_block;}
+    get summary_tooltip() {return `Name: ${this.display_name} \nCIDR: ${this.artefact.cidr_block} \nDNS: ${this.artefact.dns_label}`;}
 
-    getParent() {
-        return this.getJsonView().getVirtualCloudNetwork(this.parent_id);
+    clone() {
+        const clone = super.clone();
+        clone.generateCIDR();
+        this.cloneChildren(clone);
+        return clone;
     }
 
-    getParentId() {
-        return this.parent_id;
+    cloneChildren(clone) {
+        for (let child of this.children) {
+            child.clone().subnet_id = clone.id;
+        }
     }
 
     /*
      ** SVG Processing
      */
-    draw() {
-        console.log(`Drawing ${this.getArtifactReference()} : ${this.display_name} (${this.artefact_id}) [${this.parent_id}]`);
-        let me = this;
-        let svg = super.draw();
-        let fill = d3.select(d3Id(this.id)).attr('fill');
-        svg.on("mouseover", function () {
-            //d3.selectAll(d3Id(me.id + '-vnic')).attr('fill', svg_highlight_colour);
-            $(jqId(me.id + '-vnic')).addClass('highlight-vnic');
-            d3.event.stopPropagation();
-        });
-        svg.on("mouseout", function () {
-            //d3.selectAll(d3Id(me.id + '-vnic')).attr('fill', fill);
-            $(jqId(me.id + '-vnic')).removeClass('highlight-vnic');
-            d3.event.stopPropagation();
-        });
-        this.drawAttachments();
-        console.log();
+    // Add Specific Mouse Events
+    addAssociationHighlighting() {
+        $(jqId(`${this.artefact_id}-vnic`)).addClass('highlight-association');
     }
 
+    removeAssociationHighlighting() {
+        $(jqId(`${this.artefact_id}-vnic`)).removeClass('highlight-association');
+    }
     drawAttachments() {
         console.log(`Drawing ${this.getArtifactReference()} : ${this.display_name} Attachments (${this.artefact_id})`);
         let attachment_count = 0;
@@ -53,7 +61,6 @@ class SubnetView extends OkitContainerDesignerArtefactView {
         if (this.artefact.route_table_id !== '') {
             let attachment = new RouteTableView(this.getJsonView().getOkitJson().getRouteTable(this.route_table_id), this.getJsonView());
             attachment.attached_id = this.id;
-            console.info(`Drawing ${this.getArtifactReference()} Route Table : ${attachment.display_name}`);
             attachment.draw();
             attachment_count += 1;
         }
@@ -61,35 +68,9 @@ class SubnetView extends OkitContainerDesignerArtefactView {
         for (let security_list_id of this.artefact.security_list_ids) {
             let attachment = new SecurityListView(this.getJsonView().getOkitJson().getSecurityList(security_list_id), this.getJsonView());
             attachment.attached_id = this.id;
-            console.info(`Drawing ${this.getArtifactReference()} Security List : ${attachment.display_name}`);
             attachment.draw();
             attachment_count += 1;
         }
-    }
-
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, Subnet.getArtifactReference());
-        // Get Parents First Child Container Offset
-        let parent_first_child = this.getParent().getChildOffset(this.getArtifactReference());
-        definition['svg']['x'] = parent_first_child.dx;
-        definition['svg']['y'] = parent_first_child.dy;
-        definition['svg']['width'] = this.dimensions['width'];
-        definition['svg']['height'] = this.dimensions['height'];
-        definition['rect']['stroke']['colour'] = stroke_colours.orange;
-        definition['rect']['stroke']['dash'] = 5;
-        definition['rect']['stroke']['width'] = 2;
-        definition['icon']['x_translation'] = icon_translate_x_start;
-        definition['icon']['y_translation'] = icon_translate_y_start;
-        definition['name']['show'] = true;
-        definition['label']['show'] = true;
-        if (this.prohibit_public_ip_on_vnic) {
-            definition['label']['text'] = 'Private ' + Subnet.getArtifactReference();
-        } else  {
-            definition['label']['text'] = 'Public ' + Subnet.getArtifactReference();
-        }
-        definition['info']['show'] = true;
-        definition['info']['text'] = this.cidr_block;
-        return definition;
     }
 
     /*
@@ -99,6 +80,10 @@ class SubnetView extends OkitContainerDesignerArtefactView {
         let me = this;
         $(jqId(PROPERTIES_PANEL)).load("propertysheets/subnet.html", () => {
             // Load Referenced Ids
+            // Virtual Cloud Network
+            this.loadVirtualCloudNetworkSelect('vcn_id');
+            $(jqId('vcn_id')).on('change', () => {if ($(jqId('vcn_id')).val() != '') me.artefact.generateCIDR();});
+            // Route Table
             let route_table_select = $(jqId('route_table_id'));
             route_table_select.append($('<option>').attr('value', '').text(''));
             for (let route_table of me.artefact.getOkitJson().route_tables) {
@@ -132,6 +117,23 @@ class SubnetView extends OkitContainerDesignerArtefactView {
     }
 
     /*
+    ** Dimension Overrides
+     */
+    getTopEdgeChildrenMaxDimensions() {
+        let top_edge_dimensions = {width: 0, height: this.icon_height};
+        if (this.artefact.route_table_id !== '') {
+            const dimensions = this.json_view.getRouteTable(this.artefact.route_table_id).dimensions;
+            top_edge_dimensions.width += (dimensions.width + positional_adjustments.spacing.x);
+        }
+        // Security Lists
+        for (let security_list_id of this.artefact.security_list_ids) {
+            const dimensions = this.json_view.getSecurityList(security_list_id).dimensions;
+            top_edge_dimensions.width += (dimensions.width + positional_adjustments.spacing.x);
+        }
+        return top_edge_dimensions;
+    }
+
+    /*
     ** Child Artifact Functions
      */
     getTopEdgeArtifacts() {
@@ -143,11 +145,11 @@ class SubnetView extends OkitContainerDesignerArtefactView {
     }
 
     getBottomArtifacts() {
-        return [Instance.getArtifactReference()];
+        return [Instance.getArtifactReference(), InstancePool.getArtifactReference(), DatabaseSystem.getArtifactReference(), AutonomousDatabase.getArtifactReference(), MySQLDatabaseSystem.getArtifactReference()];
     }
 
     getLeftArtifacts() {
-        return [FileStorageSystem.getArtifactReference(), DatabaseSystem.getArtifactReference(), AutonomousDatabase.getArtifactReference()];
+        return [FileStorageSystem.getArtifactReference()];
     }
 
     /*
@@ -158,7 +160,7 @@ class SubnetView extends OkitContainerDesignerArtefactView {
     }
 
     static getDropTargets() {
-        return [VirtualCloudNetwork.getArtifactReference()];
+        return [VirtualCloudNetwork.getArtifactReference(), Compartment.getArtifactReference()];
     }
 
 }

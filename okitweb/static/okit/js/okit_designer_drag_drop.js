@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Drag & Drop Javascript');
@@ -112,9 +112,7 @@ function dragDrop(evt) {
     let dropFunction = 'drop' + artefact.name;
     console.info('Drop Function : ' + dropFunction);
     let result = okitJsonView[dropFunction](target);
-    if (result) {
-        console.debug(JSON.stringify(result, null, 2));
-    }
+    if (result) {console.debug(JSON.stringify(result, null, 2));}
     okitJsonView.draw();
     // Clear Drag class
     this.classList.remove('over');  // this / e.target is previous target element.

@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer AutonomousDatabase View Javascript');
@@ -12,6 +12,7 @@ class AutonomousDatabaseView extends OkitDesignerArtefactView {
         super(artefact, json_view);
     }
 
+    // -- Reference
     get parent_id() {
         let subnet = this.getJsonView().getSubnet(this.artefact.subnet_id);
         if (subnet && subnet.compartment_id === this.artefact.compartment_id) {
@@ -22,70 +23,22 @@ class AutonomousDatabaseView extends OkitDesignerArtefactView {
             return this.compartment_id;
         }
     }
-
-    getParent() {
-        return this.getJsonView().getSubnet(this.parent_id) ? this.getJsonView().getSubnet(this.parent_id) : this.getJsonView().getCompartment(this.parent_id);
-    }
-
-    getParentId() {
-        return this.parent_id;
-    }
-
-
-    /*
-    ** Clone Functionality
-     */
-    clone() {
-        return new AutonomousDatabaseView(this.artefact, this.getJsonView());
-    }
-
+    get parent() {return this.getJsonView().getSubnet(this.parent_id) ? this.getJsonView().getSubnet(this.parent_id) : this.getJsonView().getCompartment(this.parent_id);}
+    // Direct Subnet Access
+    set subnet_id(id) {this.artefact.subnet_id = id;}
 
     /*
      ** SVG Processing
      */
-    // Additional draw Processing
-    draw() {
-        console.log('Drawing ' + this.getArtifactReference() + ' : ' + this.getArtefact().id + ' [' + this.parent_id + ']');
-        let svg = super.draw();
-        /*
-        ** Add Properties Load Event to created svg. We require the definition of the local variable "me" so that it can
-        ** be used in the function dur to the fact that using "this" in the function will refer to the function not the
-        ** Artifact.
-         */
-        // Get Inner Rect to attach Connectors
-        let rect = svg.select("rect[id='" + safeId(this.id) + "']");
-        if (rect && rect.node()) {
-            let boundingClientRect = rect.node().getBoundingClientRect();
-            // Add Connector Data
-            svg.attr("data-compartment-id", this.compartment_id)
-                .attr("data-connector-start-y", boundingClientRect.y + (boundingClientRect.height / 2))
-                .attr("data-connector-start-x", boundingClientRect.x)
-                .attr("data-connector-end-y", boundingClientRect.y + (boundingClientRect.height / 2))
-                .attr("data-connector-end-x", boundingClientRect.x)
-                .attr("data-connector-id", this.id)
-                .attr("dragable", true)
-                .selectAll("*")
-                .attr("data-connector-start-y", boundingClientRect.y + (boundingClientRect.height / 2))
-                .attr("data-connector-start-x", boundingClientRect.x)
-                .attr("data-connector-end-y", boundingClientRect.y + (boundingClientRect.height / 2))
-                .attr("data-connector-end-x", boundingClientRect.x)
-                .attr("data-connector-id", this.id)
-                .attr("dragable", true);
-        }
-        console.log();
-        return svg;
+    // Add Specific Mouse Events
+    addAssociationHighlighting() {
+        for (let id of this.nsg_ids) {$(jqId(id)).addClass('highlight-association');}
+        $(jqId(this.artefact_id)).addClass('highlight-association');
     }
-    // Return Artifact Specific Definition.
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition(this, this.getArtifactReference());
-        let first_child = this.getParent().getChildOffset(this.getArtifactReference());
-        definition['svg']['x'] = first_child.dx;
-        definition['svg']['y'] = first_child.dy;
-        definition['svg']['width'] = this.dimensions['width'];
-        definition['svg']['height'] = this.dimensions['height'];
-        definition['rect']['stroke']['colour'] = stroke_colours.bark;
-        definition['rect']['stroke']['dash'] = 1;
-        return definition;
+
+    removeAssociationHighlighting() {
+        for (let id of this.nsg_ids) {$(jqId(id)).removeClass('highlight-association');}
+        $(jqId(this.artefact_id)).removeClass('highlight-association');
     }
 
     /*
@@ -115,19 +68,6 @@ class AutonomousDatabaseView extends OkitDesignerArtefactView {
             // Load Reference Ids
             // Network Security Groups
             this.loadNetworkSecurityGroups('nsg_ids', this.subnet_id);
-            /*
-            let network_security_groups_select = d3.select(d3Id('nsg_ids'));
-            for (let network_security_group of okitJson.network_security_groups) {
-                let div = network_security_groups_select.append('div');
-                div.append('input')
-                    .attr('type', 'checkbox')
-                    .attr('id', safeId(network_security_group.id))
-                    .attr('value', network_security_group.id);
-                div.append('label')
-                    .attr('for', safeId(network_security_group.id))
-                    .text(network_security_group.display_name);
-            }
-            */
             // Subnets
             let subnet_select = $(jqId('subnet_id'));
             subnet_select.append($('<option>').attr('value', '').text(''));

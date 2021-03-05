@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Designer Compartment View Javascript');
@@ -10,14 +10,19 @@ console.info('Loaded Designer Compartment View Javascript');
 class CompartmentView extends OkitContainerDesignerArtefactView {
     constructor(artefact=null, json_view) {
         super(artefact, json_view);
+        this.export = false;
     }
 
     get parent_id() {
-        console.info(`Compartment Id ${this.artefact.compartment_id}`);
         return (this.artefact.compartment_id !== null && this.artefact.compartment_id !== this.artefact.id) ? this.artefact.compartment_id : 'canvas';
     }
-    get minimum_width() {return 400;}
-    get minimum_height() {return 150;}
+    get parent() {return this.getJsonView().getCompartment(this.parent_id);}
+    get children() {return [...this.json_view.getCompartments(), ...this.json_view.getVirtualCloudNetworks(),
+        ...this.json_view.getBlockStorageVolumes(), ...this.json_view.getDynamicRoutingGateways(),
+        ...this.json_view.getAutonomousDatabases(), ...this.json_view.getCustomerPremiseEquipments(),
+        ...this.json_view.getObjectStorageBuckets(), ...this.json_view.getFastConnects(),
+        ...this.json_view.getIPSecConnections(), ...this.json_view.getRemotePeeringConnections(),
+        ...this.json_view.getInstances()].filter(child => child.parent_id === this.artefact.id);}
     get minimum_dimensions() {
         if (this.isTopLevel()) {
             return {width: $(`#${this.json_view.parent_id}`).width(), height: $(`#${this.json_view.parent_id}`).height()};
@@ -26,48 +31,32 @@ class CompartmentView extends OkitContainerDesignerArtefactView {
         }
     }
 
-    getParent() {
-        return this.getJsonView().getCompartment(this.parent_id);
-    }
-
     /*
     ** Test if Top Level compartment
      */
 
     isTopLevel() {
-        return this.getParent() ? false : true;
+        return this.parent || this.export ? false : true;
     }
 
     /*
     ** Clone Functionality
      */
     clone() {
-        return new CompartmentView(this.artefact, this.getJsonView());
+        const clone = super.clone();
+        this.cloneChildren(clone);
+        return clone;
+    }
+
+    cloneChildren(clone) {
+        for (let child of this.children) {
+            child.clone().compartment_id = clone.id;
+        }
     }
 
     /*
     ** SVG Processing
     */
-    getSvgDefinition() {
-        let definition = this.newSVGDefinition();
-        console.info('>>>>>>>> Parent');
-        console.info(this.getParent());
-        if (this.getParent()) {
-            let parent_first_child = this.getParent().getChildOffset(this.getArtifactReference());
-            definition['svg']['x'] = parent_first_child.dx;
-            definition['svg']['y'] = parent_first_child.dy;
-        }
-        definition['svg']['width'] = this.dimensions['width'];
-        definition['svg']['height'] = this.dimensions['height'];
-        definition['rect']['stroke']['colour'] = stroke_colours.bark;
-        definition['rect']['stroke']['dash'] = 5;
-        definition['rect']['stroke']['width'] = 2;
-        definition['icon']['x_translation'] = icon_translate_x_start;
-        definition['icon']['y_translation'] = icon_translate_y_start;
-        definition['name']['show'] = true;
-        definition['label']['show'] = true;
-        return definition;
-    }
 
     /*
     ** Property Sheet Load function
@@ -86,7 +75,7 @@ class CompartmentView extends OkitContainerDesignerArtefactView {
     }
 
     getContainerArtifacts() {
-        return [Compartment.getArtifactReference(), VirtualCloudNetwork.getArtifactReference()];
+        return [Compartment.getArtifactReference(), VirtualCloudNetwork.getArtifactReference(), Subnet.getArtifactReference()];
     }
 
     getLeftArtifacts() {
@@ -95,7 +84,12 @@ class CompartmentView extends OkitContainerDesignerArtefactView {
 
     getRightArtifacts() {
         return [DynamicRoutingGateway.getArtifactReference(), AutonomousDatabase.getArtifactReference(),
-            ObjectStorageBucket.getArtifactReference(), FastConnect.getArtifactReference()];
+            ObjectStorageBucket.getArtifactReference(), FastConnect.getArtifactReference(),
+            IPSecConnection.getArtifactReference(), RemotePeeringConnection.getArtifactReference()];
+    }
+
+    getRightEdgeArtifacts() {
+        return [CustomerPremiseEquipment.getArtifactReference()];
     }
 
     /*

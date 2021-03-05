@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded OKIT Model Javascript');
@@ -13,11 +13,15 @@ class OkitJson {
      */
     constructor(okit_json_string = '') {
         this.title = "OKIT OCI Visualiser Json";
-        this.description = "";
+        this.description = `# Description\n__Created ${getCurrentDateTime()}__\n\n--------------------------------------\n\n`;
+        this.created = getCurrentDateTime();
+        this.updated = this.created;
         this.okit_version = okitVersion;
-        this.compartments = [];
+
         this.autonomous_databases = [];
         this.block_storage_volumes = [];
+        this.compartments = [];
+        this.customer_premise_equipments = [];
         this.database_systems = [];
         this.dynamic_routing_gateways = [];
         this.fast_connects = [];
@@ -25,13 +29,15 @@ class OkitJson {
         this.instances = [];
         this.instance_pools = [];
         this.internet_gateways = [];
+        this.ipsec_connections = [];
         this.load_balancers = [];
         this.local_peering_gateways = [];
+        this.mysql_database_systems = [];
         this.nat_gateways = [];
         this.network_security_groups = [];
         this.object_storage_buckets = [];
         this.oke_clusters = [];
-        this.remote_peering_gateways = [];
+        this.remote_peering_connections = [];
         this.route_tables = [];
         this.security_lists = [];
         this.service_gateways = [];
@@ -50,13 +56,16 @@ class OkitJson {
     load(okit_json) {
         console.log('Load OKIT Json');
         // Title & Description
-        this.title = okit_json.title;
-        this.description = okit_json.description;
+        if (okit_json.title) {
+            this.title = okit_json.title;
+        }
+        if (okit_json.description) {
+            this.description = okit_json.description;
+        }
         // Compartments
         if (okit_json.hasOwnProperty('compartments')) {
             for (let artefact of okit_json['compartments']) {
                 let obj = this.newCompartment(artefact);
-                console.info(obj);
             }
         }
 
@@ -65,21 +74,18 @@ class OkitJson {
         if (okit_json.hasOwnProperty('autonomous_databases')) {
             for (let artefact of okit_json['autonomous_databases']) {
                 let obj = this.newAutonomousDatabase(artefact);
-                console.info(obj);
             }
         }
         // Block Storage Volumes
         if (okit_json.hasOwnProperty('block_storage_volumes')) {
             for (let artefact of okit_json['block_storage_volumes']) {
                 let obj = this.newBlockStorageVolume(artefact);
-                console.info(obj);
             }
         }
         // Object Storage Buckets
         if (okit_json.hasOwnProperty('object_storage_buckets')) {
             for (let artefact of okit_json['object_storage_buckets']) {
                 let obj = this.newObjectStorageBucket(artefact);
-                console.info(obj);
             }
         }
         // Virtual Cloud Networks
@@ -90,7 +96,6 @@ class OkitJson {
         if (okit_json.hasOwnProperty('virtual_cloud_networks')) {
             for (let artefact of okit_json['virtual_cloud_networks']) {
                 let obj = this.newVirtualCloudNetwork(artefact);
-                console.info(obj);
             }
         }
         // Reset
@@ -100,14 +105,30 @@ class OkitJson {
         if (okit_json.hasOwnProperty('web_application_firewalls')) {
             for (let artefact of okit_json['web_application_firewalls']) {
                 let obj = this.newWebApplicationFirewall(artefact);
-                console.info(obj);
+            }
+        }
+        // Customer Premise Equipments
+        if (okit_json.hasOwnProperty('customer_premise_equipments')) {
+            for (let artefact of okit_json['customer_premise_equipments']) {
+                let obj = this.newCustomerPremiseEquipment(artefact);
             }
         }
         // Dynamic Routing Gateways
         if (okit_json.hasOwnProperty('dynamic_routing_gateways')) {
             for (let artefact of okit_json['dynamic_routing_gateways']) {
                 let obj = this.newDynamicRoutingGateway(artefact);
-                console.info(obj);
+            }
+        }
+        // IPSec Connections
+        if (okit_json.hasOwnProperty('ipsec_connections')) {
+            for (let artefact of okit_json['ipsec_connections']) {
+                let obj = this.newIPSecConnection(artefact);
+            }
+        }
+        // RemotePeering Connections
+        if (okit_json.hasOwnProperty('remote_peering_connections')) {
+            for (let artefact of okit_json['remote_peering_connections']) {
+                let obj = this.newRemotePeeringConnection(artefact);
             }
         }
 
@@ -116,63 +137,54 @@ class OkitJson {
         if (okit_json.hasOwnProperty('internet_gateways')) {
             for (let artefact of okit_json['internet_gateways']) {
                 let obj = this.newInternetGateway(artefact);
-                console.info(obj);
             }
         }
         // NAT Gateway
         if (okit_json.hasOwnProperty('nat_gateways')) {
             for (let artefact of okit_json['nat_gateways']) {
                 let obj = this.newNATGateway(artefact);
-                console.info(obj);
             }
         }
         // Route Tables
         if (okit_json.hasOwnProperty('route_tables')) {
             for (let artefact of okit_json['route_tables']) {
                 let obj = this.newRouteTable(artefact);
-                console.info(obj);
             }
         }
         // Security Lists
         if (okit_json.hasOwnProperty('security_lists')) {
             for (let artefact of okit_json['security_lists']) {
                 let obj = this.newSecurityList(artefact);
-                console.info(obj);
             }
         }
         // Network Security Groups
         if (okit_json.hasOwnProperty('network_security_groups')) {
             for (let artefact of okit_json['network_security_groups']) {
                 let obj = this.newNetworkSecurityGroup(artefact);
-                console.info(obj);
             }
         }
         // Service Gateways
         if (okit_json.hasOwnProperty('service_gateways')) {
             for (let artefact of okit_json['service_gateways']) {
                 let obj = this.newServiceGateway(artefact);
-                console.info(obj);
             }
         }
         // Local Peering Gateways
         if (okit_json.hasOwnProperty('local_peering_gateways')) {
             for (let artefact of okit_json['local_peering_gateways']) {
                 let obj = this.newLocalPeeringGateway(artefact);
-                console.info(obj);
             }
         }
         // Subnets
         if (okit_json.hasOwnProperty('subnets')) {
             for (let artefact of okit_json['subnets']) {
                 let obj = this.newSubnet(artefact);
-                console.info(obj);
             }
         }
         // OkeClusters
         if (okit_json.hasOwnProperty('oke_clusters')) {
             for (let artefact of okit_json['oke_clusters']) {
                 let obj = this.newOkeCluster(artefact);
-                console.info(obj);
             }
         }
 
@@ -181,14 +193,18 @@ class OkitJson {
         if (okit_json.hasOwnProperty('file_storage_systems')) {
             for (let artefact of okit_json['file_storage_systems']) {
                 let obj = this.newFileStorageSystem(artefact);
-                console.info(obj);
             }
         }
         // Database Systems
         if (okit_json.hasOwnProperty('database_systems')) {
             for (let artefact of okit_json['database_systems']) {
                 let obj = this.newDatabaseSystem(artefact);
-                console.info(obj);
+            }
+        }
+        // MySQL Database Systems
+        if (okit_json.hasOwnProperty('mysql_database_systems')) {
+            for (let artefact of okit_json['mysql_database_systems']) {
+                let obj = this.newMySQLDatabaseSystem(artefact);
             }
         }
         // Instances
@@ -196,21 +212,18 @@ class OkitJson {
             for (let artefact of okit_json['instances']) {
                 let subnet = this.getSubnet(artefact.subnet_id)
                 let obj = this.newInstance(artefact);
-                console.info(obj);
             }
         }
         // InstancePools
         if (okit_json.hasOwnProperty('instance_pools')) {
             for (let artefact of okit_json['instance_pools']) {
                 let obj = this.newInstancePool(artefact);
-                console.info(obj);
             }
         }
         // Load Balancers
         if (okit_json.hasOwnProperty('load_balancers')) {
             for (let artefact of okit_json['load_balancers']) {
                 let obj = this.newLoadBalancer(artefact);
-                console.info(obj);
             }
         }
         console.log();
@@ -294,6 +307,31 @@ class OkitJson {
             if (this.compartments[i].id === id) {
                 this.compartments[i].delete();
                 this.compartments.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // Customer Premise Equipment
+    newCustomerPremiseEquipment(data = {}) {
+        console.info('New CustomerPremiseEquipment');
+        this.customer_premise_equipments.push(new CustomerPremiseEquipment(data, this));
+        return this.customer_premise_equipments[this.customer_premise_equipments.length - 1];
+    }
+    getCustomerPremiseEquipments() {return this.customer_premise_equipments;}
+    getCustomerPremiseEquipment(id='') {
+        for (let artefact of this.getCustomerPremiseEquipments()) {
+            if (artefact.id === id) {
+                return artefact;
+            }
+        }
+        return undefined;
+    }
+    deleteCustomerPremiseEquipment(id) {
+        for (let i = 0; i < this.customer_premise_equipments.length; i++) {
+            if (this.customer_premise_equipments[i].id === id) {
+                this.customer_premise_equipments[i].delete();
+                this.customer_premise_equipments.splice(i, 1);
                 break;
             }
         }
@@ -488,6 +526,31 @@ class OkitJson {
         }
     }
 
+    // IPSec Connection
+    newIPSecConnection(data) {
+        console.info('New IPSec Connection');
+        this.ipsec_connections.push(new IPSecConnection(data, this));
+        return this.ipsec_connections[this.ipsec_connections.length - 1];
+    }
+    getIPSecConnections() {return this.ipsec_connections;}
+    getIPSecConnection(id='') {
+        for (let artefact of this.getIPSecConnections()) {
+            if (artefact.id === id) {
+                return artefact;
+            }
+        }
+        return undefined;
+    }
+    deleteIPSecConnection(id) {
+        for (let i = 0; i < this.ipsec_connections.length; i++) {
+            if (this.ipsec_connections[i].id === id) {
+                this.ipsec_connections[i].delete();
+                this.ipsec_connections.splice(i, 1);
+                break;
+            }
+        }
+    }
+
     // Load Balancer
     newLoadBalancer(data) {
         console.info('New Load Balancer');
@@ -537,6 +600,33 @@ class OkitJson {
             if (this.local_peering_gateways[i].id === id) {
                 this.local_peering_gateways[i].delete();
                 this.local_peering_gateways.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // MySQL Database System
+    newMySQLDatabaseSystem(data) {
+        console.info('New MySQL Database System');
+        this.mysql_database_systems.push(new MySQLDatabaseSystem(data, this));
+        return this.mysql_database_systems[this.mysql_database_systems.length - 1];
+    }
+    getMySQLDatabaseSystems() {
+        return this.mysql_database_systems;
+    }
+    getMySQLDatabaseSystem(id='') {
+        for (let artefact of this.getMySQLDatabaseSystems()) {
+            if (artefact.id === id) {
+                return artefact;
+            }
+        }
+        return undefined;
+    }
+    deleteMySQLDatabaseSystem(id) {
+        for (let i = 0; i < this.mysql_database_systems.length; i++) {
+            if (this.mysql_database_systems[i].id === id) {
+                this.mysql_database_systems[i].delete();
+                this.mysql_database_systems.splice(i, 1);
                 break;
             }
         }
@@ -645,6 +735,31 @@ class OkitJson {
             if (this.oke_clusters[i].id === id) {
                 this.oke_clusters[i].delete();
                 this.oke_clusters.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // RemotePeeringConnection
+    newRemotePeeringConnection(data) {
+        console.info('New Remote Peering Connection');
+        this.remote_peering_connections.push(new RemotePeeringConnection(data, this));
+        return this.remote_peering_connections[this.remote_peering_connections.length - 1];
+    }
+    getRemotePeeringConnections() {return this.remote_peering_connections;}
+    getRemotePeeringConnection(id='') {
+        for (let artefact of this.getRemotePeeringConnections()) {
+            if (artefact.id === id) {
+                return artefact;
+            }
+        }
+        return undefined;
+    }
+    deleteRemotePeeringConnection(id) {
+        for (let i = 0; i < this.remote_peering_connections.length; i++) {
+            if (this.remote_peering_connections[i].id === id) {
+                this.remote_peering_connections[i].delete();
+                this.remote_peering_connections.splice(i, 1);
                 break;
             }
         }
@@ -819,8 +934,8 @@ class OkitJson {
                 if (successCallback && successCallback !== null) successCallback(JSON.parse(resp));
             },
             error: function(xhr, status, error) {
-                console.info('Status : '+ status)
-                console.info('Error : '+ error)
+                console.warn('Status : '+ status)
+                console.warn('Error  : '+ error)
                 if (errorCallback && errorCallback !== null) errorCallback(error);
             }
         });
@@ -837,12 +952,12 @@ class OkitJson {
             contentType: 'application/json',
             data: JSON.stringify(this),
             success: function(resp) {
-                console.info('Validation Response : ' + resp);
+                console.info('Estimator Response : ' + resp);
                 if (callback && callback !== null) callback(JSON.parse(resp));
             },
             error: function(xhr, status, error) {
-                console.info('Status : '+ status)
-                console.info('Error : '+ error)
+                console.warn('Status : '+ status)
+                console.warn('Error  : '+ error)
             }
         });
     }
@@ -859,12 +974,27 @@ class OkitArtifact {
     constructor (okitjson) {
         this.getOkitJson = function() {return okitjson};
         // Add Id
-        this.id = 'okit.' + this.constructor.name.toLowerCase() + '.' + uuidv4();
+        this.id = this.okit_id;
+        // All Artefacts will have compartment id, display name & description
+        this.compartment_id = '';
+        this.display_name = '';
+        this.definition = '';
         // Add default for common Tag variables
         this.freeform_tags = {};
         this.defined_tags = {};
+        Object.defineProperty(this, 'okit_json', {
+            get: function () {
+                return okitjson;
+            }
+        });
     }
 
+    get name() {return this.display_name;}
+    set name(name) {this.display_name = name;}
+    get okit_id() {return 'okit.' + this.constructor.name.toLowerCase() + '.' + uuidv4();}
+    get resource_name() {return this.getArtifactReference();}
+    get list_name() {return `${this.resource_name.toLowerCase().split(' ').join('_')}s`;}
+    get json_model_list() {return this.okit_json[this.list_name];}
 
     /*
     ** Clone Functionality
@@ -875,10 +1005,21 @@ class OkitArtifact {
     }
 
     /*
+    ** Clean - Remove null & undefined
+     */
+    clean(obj) {
+        return JSON.clean(obj);
+    }
+
+    /*
     ** Merge Functionality
      */
     merge(update) {
-        $.extend(true, this, update);
+        if (update.name !== undefined) {
+            if (update.display_name === undefined || update.display_name === '') update.display_name = update.name;
+            delete update.name;
+        }
+        $.extend(true, this, this.clean(update));
     }
 
     /*
@@ -912,11 +1053,11 @@ class OkitArtifact {
     }
 
     deleteChildren() {
-        console.info('Default empty deleteChildren()');
+        console.warn('Default empty deleteChildren()');
     }
 
     getChildren(artefact) {
-        console.info('Default empty getChildren()');
+        console.warn('Default empty getChildren()');
     }
 
 
@@ -937,7 +1078,7 @@ class OkitArtifact {
     }
 
     getNamePrefix() {
-        return 'okit-';
+        return okitSettings ? okitSettings.name_prefix : 'okit-';
     }
 
     getAvailabilityDomainNumber(availability_domain) {
@@ -1002,3 +1143,4 @@ class OkitRegions {
     }
 }
 
+let okitJsonModel

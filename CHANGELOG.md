@@ -1,6 +1,122 @@
 # Release Notes
 
 
+## Version 0.18.0
+**Release Date**: 3rd March 2021
+### Features
+1. Add OCPU & Memory option when selecting Flex Instance (OKIT-133).
+2. Change default shape for Instances to Flex.
+3. Add Min/Max Bandwidth for flexible Loadbalancer shape.
+4. Default Loadbalancer to flexible.
+5. Test for empty Network Entity Id on Route Rule.
+6. Fast Discovery. Use the OCI query api functionality instead of list based interface for retrieving OCI Resources when executing Query. The classic query is still available if the default fast discovery is turned off within the preferences.
+7. Add validation to LPG to check if the connected route table has valid rules.
+8. Implement "Information" messages on validation.
+
+### Bug Fixes
+1. Add IP Validation to CPE.
+2. Add static route validation to IPSec Connection.
+3. Correct accidental element change on MySqlDatabaseSystem self.v -> self.port.
+4. Terraform DB System template was not building Fault Domain list correctly.
+
+
+## Version 0.17.0
+**Release Date**: 10th February 2021
+### Features
+1. Simple Tabular view added to display the required properties for resources in a table format (OKIT-124).
+2. Allow Subnets to be place in compartments that do not contain the associated Virtual Cloud Network (OKIT-128).
+3. Update Copyright
+
+### Bug Fixes
+1. Compartment name is now displayed correctly for queried compartment.
+
+
+## Version 0.16.0
+**Release Date**: 20th January 2021
+### Features
+1. Description now displayed as a right side panel allowing multi line entry (Enhancement Request #165)
+2. Remove dialog associated with Save As Template because the Title & Description are now part of the main screen.
+3. Add Preference to display the OCID for a Resource.
+4. Simple GIT integration for saving Template / Terraform / Ansible files.
+5. Export to Markdown to provide design documentation, description field (Enhancement Request #165) allows Markdown whilst each contains a Documentation field to provide resource specific information.
+
+### Bug Fixes
+1. Object Storage Bucket not displaying queried name (Issue #206)
+
+
+## Version 0.15.0 
+**Release Date**: 9th December 2020
+### Features
+1. Cut / Copy / Paste / Clone functionality added.
+2. Updated Developer Guide on creating new Artefacts.
+3. Artefact Skeleton generator for developer kick start.
+
+### Bug Fixes
+1. Adding an instance and an autonomous database in the same compartment overlays them on the canvas Issue #187
+2. Resolve issue parsing TF Json.
+3. Undefined variable in ansible export Issue: #189
+
+
+## Version 0.14.1 
+**Release Date**: 18th November 2020
+### Bug Fixes
+1. Reinstate Public / Private to Subnet description
+2. Fix delete issue with IPSec
+3. Fix delete issue with CPE
+
+
+## Version 0.14.0 
+**Release Date**: 18th November 2020
+### Features
+1. Add collapse / expand to container style artefacts Compartment / VCN / Subnet.
+2. Implement updated, Oracle Standard, Look and Feel for diagram elements.
+3. Add Preferences option to choose display label (Name / Resource / None) this will be displayed below the element on the SVG (Enhancement: #126).
+4. Add OKIT specific "Definition" field to all artefacts to allow a free text definition of the artefact (Enhancement: #149).
+5. Add preference to specify the type of tooltip to be displayed (Name / Definition / Summary) when hovering over elements in the diagram.
+6. Add artefact element highlighting when the properties sheet is open. Moving the cursor over the properties sheet will highlight the associated artefact. 
+7. Implement simple Auto Save functionality to save model every 60 seconds to local storage (Enhancement: #169).
+8. Generate Title & Description for queried diagrams (Enhancement: #164).
+
+### Bug Fixes
+1. Fix issue where MySQL Databases could not be deleted.
+
+
+## Version 0.13.0 
+**Release Date**: 28th October 2020
+### Features
+1. Read Load Balancer Shapes from OCI / Cached OCI Values
+2. Simple Command Line generator (visualiser/okit_generator) to convert OKIT.
+3. Add MySQL Resource / Artefact.
+4. Add Cost Estimation functionality for the designed model. This is based on the Oracle public APIs.
+5. Add top-level Dockerfile and update Runtime build documentation. 
+6. Enable Instance Principal Authentication for Query/Resource Manager.
+
+### Bug Fixes
+1. Build script on Windows fail (Issue: #135)
+2. Instances were picking up Network Security Groups assigned to Autonomous Database during Terraform generation.
+3. Decoding Instance Metadata cloud-init data fails to decode .(Issue: #55)
+
+## Version 0.12.0 
+**Release Date**: 7th October 2020
+### Features
+1. Enhanced feedback for multi region query.
+2. Cache Regions
+3. Cache Compartments for specific Profile.
+4. Add functionality for Customer Premise Equipment.
+5. IPSec Connections added.
+6. Remote peering functionality added but current the user will still need to add the peering id.
+7. Dynamic Routing Gateway simplified and connections created from the new IPSec Connection & Remote Peering Connection.
+8. Database System/Autonomous name displayed on the canvas (ENH REQ: Issue: #120).
+9. Experimental Import from Terraform JSON Format file.
+10. Export to Resource Manage local GitHub directory.
+
+### Bug Fixes
+1. Fix Service Gateway only offers all services when drawn but then provisions Object Storage #107
+2. Fix Service Gateway related route rules do not allow setting a Destination Service #109
+3. Add clean functionality to the json object to remove null / undefined to resolve null element issue in Autonomous Databases.
+4. Update Virtual Cloud Network and Subnet CIDR generation to check existing CIDRs. This resolves the duplicate CIDR issue.
+
+
 ## Version 0.11.0 
 **Release Date**: 16th September 2020
 ### Features

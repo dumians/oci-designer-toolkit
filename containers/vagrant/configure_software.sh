@@ -1,17 +1,19 @@
 #!/bin/bash
 
-# Copyright (c) 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 export PATH=/usr/local/bin:/usr/bin:${PATH}
 
 # Install new yum repos
 yum install -y \
+  oraclelinux-developer-release-el7 \
   oracle-softwarecollection-release-el7
 # Update base image
 yum update -y
 # Install additional packages
 yum install -y \
+    git \
     python36 \
     python3-pip
 # Clean Yum
@@ -35,14 +37,17 @@ source /etc/bashrc
 python3 -m pip install --upgrade pip==20.0.2
 
 # Install required python modules
-pip3 install \
-    click==7.0 \
-    flask==1.1.1 \
-    gunicorn==20.0.4 \
-    itsdangerous==1.1.0 \
-    jinja2==2.10.3 \
-    markupsafe==1.1.1 \
-    oci==2.6.0 \
-    pyyaml==5.2 \
-    werkzeug==0.16.0
+pip3 install --no-cache-dir \
+        authlib==0.15.3 \
+        flask==1.1.1 \
+        gitpython==3.1.11 \
+        git-url-parse==1.2.2 \
+        gunicorn==20.0.4 \
+        oci \
+        openpyxl==3.0.5 \
+        pandas==1.1.2 \
+        python-magic==0.4.18 \
+        pyyaml==5.3.1 \
+        requests==2.24.0 \
+        xlsxwriter==1.3.6
 

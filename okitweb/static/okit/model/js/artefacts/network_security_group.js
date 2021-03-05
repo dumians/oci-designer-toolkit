@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2020, Oracle and/or its affiliates.
+** Copyright (c) 2020, 2021, Oracle and/or its affiliates.
 ** Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 */
 console.info('Loaded Network Security Group Javascript');
@@ -28,7 +28,7 @@ class NetworkSecurityGroup extends OkitArtifact {
     ** Clone Functionality
      */
     clone() {
-        return new NetworkSecurityGroup(this, this.getOkitJson());
+        return new NetworkSecurityGroup(JSON.clone(this), this.getOkitJson());
     }
 
 
